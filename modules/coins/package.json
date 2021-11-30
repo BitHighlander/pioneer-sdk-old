@@ -1,0 +1,41 @@
+{
+  "name": "@pioneer-sdk/coins",
+  "version": "0.0.1",
+  "main": "./lib/index.js",
+  "types": "./lib/main.d.ts",
+  "_moduleAliases": {
+    "@coins": "lib/coins"
+  },
+  "scripts": {
+    "npm": "npm i",
+    "build": "tsc -p .",
+    "test": "npm run build && node __tests__/test-module.js",
+    "build:watch": "npm run build && onchange 'src/**/*.ts' -- npm run build",
+    "prepublish": "npm run build"
+  },
+  "dependencies": {
+    "@pioneer-platform/loggerdog": "latest",
+    "bech32": "^1.1.4",
+    "bignumber.js": "^9.0.1",
+    "bip84": "^0.2.5",
+    "bitcoin-regex": "^2.0.0",
+    "bitcoincash-regex": "^1.1.8",
+    "bitcoinjs-lib": "^5.2.0",
+    "crypto-js": "^4.0.0",
+    "dash-regex": "^1.0.10",
+    "dogecoin-regex": "^1.0.9",
+    "ethereum-regex": "^1.1.12",
+    "ethereumjs-util": "^7.0.10",
+    "litecoin-regex": "^1.0.8",
+    "monero-regex": "^1.0.8",
+    "neo-regex": "^1.0.7",
+    "ripple-regex": "^1.1.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/node": "^13.13.50",
+    "nodemon": "^2.0.3",
+    "typescript": "^3.8.3"
+  },
+  "gitHead": "8f73c8e6833f870784aca4690d4b5f4ce9ed62d9"
+}

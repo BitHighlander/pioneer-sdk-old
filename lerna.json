@@ -1,0 +1,19 @@
+{
+  "npmClient": "yarn",
+  "command": {
+    "publish": {
+      "message": "pioneer(release): version %v",
+      "ignoreChanges": [
+        "**/*.md",
+        "**/lib/**"
+      ]
+    }
+  },
+  "packages": [
+    "modules/**/*",
+    "apps/**/*",
+    "e2e/**/**/*"
+  ],
+  "version": "independent",
+  "useWorkspaces": true
+}

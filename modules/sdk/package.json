@@ -1,0 +1,53 @@
+{
+  "name": "@pioneer-sdk/sdk",
+  "version": "0.0.1",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "npm": "npm i",
+    "npm-update": "npm update",
+    "test": "npm run build && node __tests__/test-module.js",
+    "test-ts": "rm -R lib && npm run build && ts-node __tests__/test-module-ts.ts",
+    "lint": "prettier --write '**/**/*.ts'",
+    "start": "nodemon --watch 'src/**/*.ts' --exec ts-node __tests__node",
+    "build": "tsc -p .",
+    "build:watch": "npm run build && onchange 'src/**/*.ts' -- npm run build",
+    "prepublish": "npm run build",
+    "refresh": "rm -rf ./node_modules ./package-lock.json && npm install",
+    "test-jest": "jest --coverage",
+    "test:watch": "jest --coverage --watchAll",
+    "view:coverage": "serve coverage/lcov-report",
+    "clean": "rm -rf coverage src/**/*.js src/**/*.map lib node_modules"
+  },
+  "dependencies": {
+    "@pioneer-platform/pioneer-events": "latest",
+    "@pioneer-sdk/coins": "^0.0.1",
+    "@pioneer-sdk/types": "^0.0.1",
+    "@shapeshiftoss/asset-service": "^1.7.4",
+    "@shapeshiftoss/caip": "^1.4.2",
+    "@shapeshiftoss/chain-adapters": "^1.18.4",
+    "@shapeshiftoss/logger": "^1.0.3",
+    "@shapeshiftoss/market-service": "^1.4.1",
+    "@shapeshiftoss/swapper": "^1.11.12",
+    "@shapeshiftoss/types": "^1.13.1",
+    "@types/google-protobuf": "^3.15.5",
+    "bignumber.js": "^9.0.1",
+    "dotenv": "^8.2.0",
+    "nedb-promises": "^5.0.1",
+    "openapi-client-axios": "^3.13.1",
+    "prettyjson": "^1.2.1",
+    "ts-node": "^9.1.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.2.3",
+    "@types/node": "^13.13.51",
+    "@types/source-map-support": "^0.5.3",
+    "jest": "^26.6.3",
+    "onchange": "^7.1.0",
+    "serve": "^11.3.2",
+    "source-map-support": "^0.5.19",
+    "ts-jest": "^25.4.0",
+    "typescript": "^3.9.9"
+  },
+  "gitHead": "8f73c8e6833f870784aca4690d4b5f4ce9ed62d9"
+}

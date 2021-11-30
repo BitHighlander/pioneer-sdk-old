@@ -1,0 +1,34 @@
+{
+  "name": "pioneer-sdk",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "modules/**/*",
+      "apps/**/*",
+      "e2e/**/*"
+    ],
+    "version": "independent"
+  },
+  "scripts": {
+    "clean": "make clean",
+    "build": "lerna run build --include-dependencies",
+    "refresh": "make clean && make",
+    "up-dev": "make && make up=dev",
+    "init-env": "cp .example-env .env",
+    "test": "make test",
+    "test-debug": "make test debug=true",
+    "release": "make && make up=release",
+    "dev:watch:all": "npm run dev:watch:pioneer && npm run dev:watch:pioneer-app && npm run dev:watch:pioneer-sdk && npm run dev:watch:pioneer-xchain-client",
+    "dev:watch:pioneer": "cd modules/sdk/pioneer && npm run build:watch",
+    "dev:watch:pioneer-app": "cd modules/sdk/pioneer-app && npm run build:watch",
+    "dev:watch:pioneer-sdk": "cd modules/sdk/pioneer-sdk && npm run build:watch",
+    "dev:watch:pioneer-xchain-client": "cd modules/sdk/pioneer-xchain-client && npm run build:watch",
+    "version:patch": "lerna version patch --yes",
+    "version:minor": "lerna version minor --yes",
+    "version:major": "lerna version major --yes",
+    "publish:lerna": "lerna publish from-package --no-private --yes",
+    "build:rest": "cd services/pioneer-server && npm run docker:push:all",
+    "build:worker": "cd services/pioneer-pubkey-ingester && npm run docker:push:all"
+  }
+}
