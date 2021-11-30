@@ -12,7 +12,7 @@ const TAG  = " | e2e-test | "
 const log = require("@pioneer-platform/loggerdog")()
 let assert = require('assert')
 import {v4 as uuidv4} from 'uuid';
-let SDK = require('@pioneer-platform/sdk')
+let SDK = require('@pioneer-sdk/sdk')
 let wait = require('wait-promise');
 let sleep = wait.sleep;
 

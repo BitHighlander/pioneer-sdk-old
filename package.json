@@ -30,5 +30,8 @@
     "publish:lerna": "lerna publish from-package --no-private --yes",
     "build:rest": "cd services/pioneer-server && npm run docker:push:all",
     "build:worker": "cd services/pioneer-pubkey-ingester && npm run docker:push:all"
+  },
+  "dependencies": {
+    "onchange": "^7.1.0"
   }
 }

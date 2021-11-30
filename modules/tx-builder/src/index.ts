@@ -45,12 +45,12 @@ import {
 //Pioneer follows OpenAPI spec
 let pioneerApi = require("@pioneer-platform/pioneer-client")
 import { FioActionParameters } from "fiosdk-offline";
+
 //Highlander fork
-const hdwallet = require("@bithighlander/hdwallet-core")
+// const hdwallet = require("@bithighlander/hdwallet-core")
 
 // SS public TODO catch up public repo
-// const hdwallet = require("@shapeshiftoss/hdwallet-core")
-// const pioneer = require("@shapeshiftoss/hdwallet-native")
+const hdwallet = require("@shapeshiftoss/hdwallet-core")
 
 //global
 const keyring = new hdwallet.Keyring()

@@ -11,7 +11,7 @@ clean::
 	sh scripts/clean.sh
 
 build::
-	yarn && yarn build
+	yarn && yarn build && onchange 'src/**/*.ts' -- yarn build
 
 test::
 	sh scripts/test.sh $(env) $(debug) $(coin)

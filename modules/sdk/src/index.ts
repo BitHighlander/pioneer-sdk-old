@@ -43,7 +43,8 @@ let {
     assetAmount,
     getSwapProtocals,
 } = require('@pioneer-platform/pioneer-coins')
-let TxBuilder = require('@pioneer-platform/pioneer-tx-builder')
+
+let TxBuilder = require('@pioneer-sdk/tx-builder')
 
 import {
     Chart,
