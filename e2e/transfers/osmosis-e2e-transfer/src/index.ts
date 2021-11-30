@@ -16,9 +16,9 @@ let SDK = require('@pioneer-sdk/sdk')
 let wait = require('wait-promise');
 let sleep = wait.sleep;
 
-import {
-    Transfer
-} from "@pioneer-sdk/types";
+// import {
+//     Transfer
+// } from "@pioneer-sdk/types";
 
 let {
     supportedBlockchains,
@@ -67,6 +67,70 @@ const test_service = async function () {
 
         let events = await app.startSocket()
 
+        //get seed
+
+        //get serailized wallet
+        let walletWatch = {}
+        //get pubkeys
+        let pubkeys = {}
+
+        //pair
+        let pairWalletNative:any = {
+            type:'native',
+            name:'native',
+            format:'mnemonic',
+            isWatch:false,
+            mnemonic:"TODO",
+            serialized:walletWatch,
+            pubkeys:pubkeys,
+        }
+        log.info(tag,"pairWalletKeepKey: ",pairWalletNative)
+        let registerResult = await app.pairWallet(pairWalletNative)
+        assert(registerResult)
+        log.info(tag,"registerResult: ",registerResult)
+
+        //TODO verify sdk state
+        let masterAddress = await app.getAddress(ASSET)
+        assert(masterAddress)
+        log.test(tag,"masterAddress: ",masterAddress)
+
+        //build tx
+        // let options:any = {
+        //     verbose: true,
+        //     txidOnResp: false, // txidOnResp is the output format
+        // }
+        //
+        // let transfer:any = {
+        //     type:'transfer',
+        //     addressFrom:masterAddress,
+        //     context:app.context,
+        //     recipient: FAUCET_OSMO_ADDRESS,
+        //     asset: ASSET,
+        //     network: ASSET,
+        //     memo: '',
+        //     "amount":amountTestNative,
+        //     fee:{
+        //         priority:5, //1-5 5 = highest
+        //     },
+        //     noBroadcast
+        // }
+        // log.debug(tag,"transfer: ",transfer)
+        //
+        // let responseTx = await app.buildTx(transfer,options,ASSET)
+        // assert(responseTx)
+        // assert(responseTx.HDwalletPayload)
+        // log.info(tag,"responseTx: ",responseTx)
+        // console.timeEnd('start2build');
+        // //invoke unsigned
+        // let transaction:any = {
+        //     type:'pioneer',
+        //     fee:{
+        //         priority:3
+        //     },
+        //     unsignedTx:responseTx,
+        //     context:app.context,
+        //     network:ASSET
+        // }
 
         log.notice("****** TEST PASS 2******")
         //process

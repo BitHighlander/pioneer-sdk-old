@@ -41,7 +41,7 @@ import {
     Balance,
     Deposit,
     HDWALLETS
-} from "@pioneer-sdk/types";
+} from "@pioneer-platform/pioneer-types";
 //Pioneer follows OpenAPI spec
 let pioneerApi = require("@pioneer-platform/pioneer-client")
 import { FioActionParameters } from "fiosdk-offline";

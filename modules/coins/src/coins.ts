@@ -37,6 +37,7 @@ export const getSwapProtocals = function(asset:string, network:string){
         return output
     }catch(e){
         log.error(e)
+        throw e
     }
 }
 
@@ -78,6 +79,7 @@ export const parseThorchainAssetString = function(input:string){
         }
     }catch(e){
         log.error(e)
+        throw e
     }
 }
 
@@ -969,5 +971,6 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
         return output
     } catch (e) {
         log.error(tag, "e: ", e)
+        throw e
     }
 }

@@ -11,27 +11,8 @@ const log = require("@pioneer-platform/loggerdog")()
 //Pioneer follows OpenAPI spec
 const Pioneer = require('openapi-client-axios').default;
 const Events = require("@pioneer-platform/pioneer-events")
-import BigNumber from 'bignumber.js'
 const Datastore = require('nedb-promises')
 const keccak256 = require('keccak256')
-import { ethers, BigNumberish } from 'ethers'
-
-
-/*
-    ShapeShiftOss
- */
-import { UnchainedUrls } from '@shapeshiftoss/chain-adapters'
-import { caip2 } from '@shapeshiftoss/caip'
-import { Asset, ChainTypes, NetworkTypes } from '@shapeshiftoss/types'
-import { getPriceHistory } from '@shapeshiftoss/market-service'
-//import { Vault } from '@shapeshiftoss/hdwallet-native-vault'
-import { SwapperManager, ZrxSwapper } from '@shapeshiftoss/swapper'
-// import { bn, bnOrZero } from 'lib/bignumber/bignumber'
-// import { fromBaseUnit, toBaseUnit } from 'lib/math'
-// import { getWeb3Instance } from 'lib/web3-instance'
-
-//end ssoss
-
 let {
     getPrecision,
     getExplorerUrl,
@@ -42,41 +23,78 @@ let {
     assetToBase,
     assetAmount,
     getSwapProtocals,
-} = require('@pioneer-platform/pioneer-coins')
+} = require('@pioneer-sdk/coins')
 
 let TxBuilder = require('@pioneer-sdk/tx-builder')
-
-import {
-    Chart,
-    SendToAddress,
-    Config,
-    User,
-    Swap,
-    SDKConfig,
-    OnboardWallet,
-    IBCdeposit,
-    Invocation,
-    OsmosisSwap,
-    Delegate,
-    Redelegate,
-    JoinPool,
-    Transfer,
-    BroadcastBody
-} from "@pioneer-sdk/types";
-
 let Invoke = require("@pioneer-platform/pioneer-invoke")
+
+
+// import { ethers, BigNumberish } from 'ethers'
+// import BigNumber from 'bignumber.js'
+
+/*
+    ShapeShiftOss
+ */
+// import { NativeAdapterArgs, NativeHDWallet } from '@shapeshiftoss/hdwallet-native'
+// import { UnchainedUrls, ChainAdapterManager } from '@shapeshiftoss/chain-adapters'
+// import { caip2 } from '@shapeshiftoss/caip'
+// import { Asset, ChainTypes, NetworkTypes } from '@shapeshiftoss/types'
+// import { getPriceHistory } from '@shapeshiftoss/market-service'
+// //import { Vault } from '@shapeshiftoss/hdwallet-native-vault'
+// import { SwapperManager, ZrxSwapper } from '@shapeshiftoss/swapper'
+// import { bn, bnOrZero } from 'lib/bignumber/bignumber'
+// import { fromBaseUnit, toBaseUnit } from 'lib/math'
+// import { getWeb3Instance } from 'lib/web3-instance'
+
+//end ssoss
+
+
+// import {
+//     Chart,
+//     SendToAddress,
+//     Config,
+//     User,
+//     Swap,
+//     SDKConfig,
+//     OnboardWallet,
+//     IBCdeposit,
+//     Invocation,
+//     OsmosisSwap,
+//     Delegate,
+//     Redelegate,
+//     JoinPool,
+//     Transfer,
+//     BroadcastBody
+// } from "@pioneer-sdk/types";
+
+// import {
+//     Chart,
+//     Config,
+//     User,
+//     Swap,
+//     SDKConfig,
+//     OnboardWallet,
+//     IBCdeposit,
+//     Invocation,
+//     OsmosisSwap,
+//     Delegate,
+//     Redelegate,
+//     JoinPool,
+//     Transfer,
+//     BroadcastBody
+// } from "@pioneer-platform/pioneer-types";
 
 export class SDK {
     public spec: any;
     public pioneerApi: any;
     public init: (blockchains: any) => Promise<any>;
-    public config: SDKConfig;
+    public config: any;
     public clients: any;
     public createPairingCode: () => Promise<any>;
     public queryKey: string;
     public service: string;
     public isTestnet: boolean;
-    public sendToAddress: (blockchain: string, asset: string, amount: string, memo?: string) => Promise<any>;
+    // public sendToAddress: (blockchain: string, asset: string, amount: string, memo?: string) => Promise<any>;
     public url: string;
     public events: any;
     public wss: string | undefined;
@@ -108,32 +126,31 @@ export class SDK {
     public stopSocket: () => any;
     public contextWalletInfo: any;
     public valueUsdContext: any;
-    public chart: (chart: Chart) => Promise<any>;
+    public chart: (chart: any) => Promise<any>;
     public setAssetContext: (asset: string) => Promise<any>;
     public status: string;
     public apiVersion: string;
     public initialized: boolean;
     public markets: any;
     public txBuilder: any;
-    public buildSwap: (swap: any, options: any, asset: string) => Promise<any>;
     public buildSwapTx: (swap: any) => Promise<any>;
     public invoke: any;
     public signTx: (unsignedTx: any) => Promise<{}>;
-    public ibcDeposit: (tx: IBCdeposit, nativeAsset: string) => Promise<any>;
+    // public ibcDeposit: (tx: IBCdeposit, nativeAsset: string) => Promise<any>;
     public getValidators: () => Promise<any>;
     public getDelegations: (validator: string, network: string, address: string) => Promise<any>;
     public getPool: (asset: string) => Promise<any>;
-    public swap: ((tx: OsmosisSwap, asset: string) => Promise<any>) | undefined;
-    public delegate: (tx: Delegate, asset: string) => Promise<any>;
-    public redelegate: (tx: Redelegate, asset: string) => Promise<any>;
-    public joinPool: (tx: JoinPool, asset: string) => Promise<any>;
-    public getFeesWithMemo: (memo?: string) => Promise<{ average: { amount: () => BigNumber }; fast: { amount: () => BigNumber }; fastest: { amount: () => BigNumber }; type: string }>;
+    public swap: ((tx: any, asset: string) => Promise<any>) | undefined;
+    public delegate: (tx: any, asset: string) => Promise<any>;
+    public redelegate: (tx: any, asset: string) => Promise<any>;
+    public joinPool: (tx: any, asset: string) => Promise<any>;
+    // public getFeesWithMemo: (memo?: string) => Promise<{ average: { amount: () => BigNumber }; fast: { amount: () => BigNumber }; fastest: { amount: () => BigNumber }; type: string }>;
     public getFeeRates: () => Promise<any>;
     public getNetwork: () => (string);
     public getExplorerUrl: (network: string) => any;
     public approve: (asset: string, spender: string, sender: string, amount: string, noBroadcast?: boolean) => Promise<any>;
     public replace: (invocationId: string, fee: any) => Promise<any>;
-    public estimateFee: ({sourceAsset, ethClient, ethInbound, inputAmount, memo}: any) => Promise<BigNumber>;
+    // public estimateFee: ({sourceAsset, ethClient, ethInbound, inputAmount, memo}: any) => Promise<BigNumber>;
     public isApproved: (routerAddress: string, tokenAddress: string, amount: any) => Promise<boolean>;
     public updateContext: () => Promise<any>;
     public getExplorerAddressUrl: (address: string, network: string) => any;
@@ -146,8 +163,8 @@ export class SDK {
     public getTransactionData: (txid: string, asset: string) => Promise<any>;
     public getFees: (params?: any) => Promise<any>;
     public deposit: (deposit: any, options: any, asset: string) => Promise<any>;
-    public transfer: (tx: Transfer, options: any, asset: string) => Promise<any>;
-    public estimateFeesWithGasPricesAndLimits: (params: any) => Promise<{ gasPrices: any; fees: { average: { amount: () => BigNumber }; fast: { amount: () => BigNumber }; fastest: { amount: () => BigNumber }; type: string } }>;
+    public transfer: (tx: any, options: any, asset: string) => Promise<any>;
+    // public estimateFeesWithGasPricesAndLimits: (params: any) => Promise<{ gasPrices: any; fees: { average: { amount: () => BigNumber }; fast: { amount: () => BigNumber }; fastest: { amount: () => BigNumber }; type: string } }>;
     public getTxCount: (asset: string) => Promise<any>;
     public updateUserInfo: () => any;
     public invokeUnsigned: (tx: any, options: any, asset: string) => Promise<any>;
@@ -157,9 +174,10 @@ export class SDK {
     public dbPubkeys: any;
     public dbBalances: any;
     public pairWallet: (wallet: any) => Promise<any>;
+    public chainAdapterManager: any;
     public HDWallet: any;
     public buildTx: (tx: any) => Promise<any>;
-    constructor(spec:string,config:SDKConfig) {
+    constructor(spec:string,config:any) {
         if(!config.username) throw Error("username required to init!")
         this.service = config.service || 'unknown'
         this.url = config.url || 'unknown'
@@ -261,6 +279,23 @@ export class SDK {
                         },
                     }
                 });
+
+                //TODO move this to package/or api?
+                // const unchainedUrls = {
+                //     [ChainTypes.Bitcoin]: {
+                //         httpUrl: 'https://dev-api.bitcoin.shapeshift.com',
+                //         wsUrl: 'wss://dev-api.bitcoin.shapeshift.com'
+                //     },
+                //     [ChainTypes.Ethereum]: {
+                //         httpUrl: 'https://dev-api.ethereum.shapeshift.com',
+                //         wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
+                //     }
+                // }
+                //
+                // //unchained
+                // this.chainAdapterManager = new ChainAdapterManager(unchainedUrls)
+
+                //todo sub to unchained txs?
 
                 //TODO when to use cache?
                 // //read pubkeys from db
@@ -526,7 +561,41 @@ export class SDK {
                         auth:'lol',
                         provider:'lol'
                     }
-                } else{
+                } else if(wallet.type === 'native'){
+                    log.debug(tag,"wallet: ",wallet)
+                    if(!wallet.pubkeys) throw Error('invalid citadel wallet!')
+                    if(!wallet.serialized.WALLET_ID) throw Error('invalid serialized wallet!')
+                    this.context = wallet.serialized.WALLET_ID
+
+                    log.debug(tag,"wallet: ",wallet)
+
+                    //load wallet into local HDwallet
+                    // const nativeAdapterArgs: NativeAdapterArgs = {
+                    //     mnemonic: process.env.CLI_MNEMONIC,
+                    //     deviceId: 'test'
+                    // }
+                    //
+                    // //set SDK to HDwallet
+                    // this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
+                    // await this.HDWallet.initialize()
+
+                    //register
+                    register = {
+                        username:this.username,
+                        blockchains:this.blockchains,
+                        context:wallet.serialized.WALLET_ID,
+                        walletDescription:{
+                            context:wallet.serialized.WALLET_ID,
+                            type:'keepkey'
+                        },
+                        data:{
+                            pubkeys:wallet.pubkeys
+                        },
+                        queryKey:this.queryKey,
+                        auth:'lol',
+                        provider:'lol'
+                    }
+                }else{
                     throw Error("102: Unhandled format! "+wallet.format)
                 }
 
@@ -813,7 +882,7 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-        this.chart = async function (chart:Chart) {
+        this.chart = async function (chart:any) {
             let tag = TAG + " | chart | "
             try {
                 //
@@ -835,48 +904,6 @@ export class SDK {
         //         log.error(tag, "e: ", e)
         //     }
         // }
-        // @ts-ignore
-        this.sendToAddress = async function (intent:SendToAddress) {
-            let tag = TAG + " | sendToAddress | "
-            try {
-
-                //build a tx
-                let txInput:any = {
-                    "asset":
-                        {
-                            "chain":intent.blockchain,
-                            "symbol":intent.asset,
-                            "ticker":intent.asset
-                        },
-                    "amount":
-                        {
-                            "type":"BASE",
-                            "decimal":18,
-                            amount: function(){
-                                return intent.amount
-                            }
-                        },
-                    "recipient":intent.address,
-                }
-                if(intent.memo) txInput.memo = intent.memo
-
-                //ETH
-                if(this.isTestnet && intent.blockchain === 'ETH'){
-                    txInput.chainId = 3 //ropsten
-                }
-
-                if(intent.noBroadcast){
-                    txInput.noBroadcast = true
-                }
-
-                let txid = await this.clients[intent.blockchain].transfer(txInput)
-                log.debug("txid",txid)
-
-                return txid
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
         //SDK v2
         this.buildSwapTx = async function (swap:any) {
             let tag = TAG + " | buildSwapTx | "
@@ -976,71 +1003,71 @@ export class SDK {
                 soon? thorchain?
 
          */
-        this.ibcDeposit = async function (tx:IBCdeposit,asset:string) {
-            let tag = TAG + " | ibcDeposit | "
-            try {
-                let coin = asset
-
-                if(!tx.fee) throw Error("103: fee required!")
-
-                //context
-                log.debug(tag,"currentContext: ",this.context)
-                log.debug(tag,"txContext: ",tx.context)
-                if(tx.context){
-                    if(this.context !== tx.context){
-                        //TODO validate context is valid
-                        this.context = tx.context
-                    }
-                } else {
-                    log.debug(tag,"using default context:",this.context)
-                    tx.context = this.context
-                }
-                if(!tx.context) throw Error("102: context is required on invocations!")
-
-                let timeout_height = tx.timeout_height
-                let source_channel = tx.source_channel
-                let source_port = tx.source_port
-                let sender = tx.sender
-                let receiver = tx.receiver
-                let token = tx.token
-
-                if(!source_channel) throw Error("103: missing source_channel")
-                if(!source_port) throw Error("104: missing source_port")
-                if(!sender) throw Error("105: missing sender")
-                if(!receiver) throw Error("106: missing receiver")
-                if(!token) throw Error("107: missing token")
-                if(!this.username) throw Error("108: missing username")
-
-                let memo = tx.memo || ''
-                let invocation:Invocation = {
-                    type:'ibcdeposit',
-                    context:tx.context,
-                    username:this.username,
-                    coin,
-                    fee:tx.fee,
-                    network:coin,
-                    asset:coin,
-                    // @ts-ignore
-                    sender,
-                    receiver,
-                    token,
-                    timeout_height,
-                    source_channel,
-                    source_port,
-                    memo
-                }
-                if(tx.noBroadcast) invocation.noBroadcast = true
-
-                log.debug(tag,"invocation: ",invocation)
-                let result = await this.invoke.invoke(invocation)
-                if(!result) throw Error("Failed to create invocation!")
-                log.debug("result: ",result)
-
-                return result.invocationId
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
+        // this.ibcDeposit = async function (tx:IBCdeposit,asset:string) {
+        //     let tag = TAG + " | ibcDeposit | "
+        //     try {
+        //         let coin = asset
+        //
+        //         if(!tx.fee) throw Error("103: fee required!")
+        //
+        //         //context
+        //         log.debug(tag,"currentContext: ",this.context)
+        //         log.debug(tag,"txContext: ",tx.context)
+        //         if(tx.context){
+        //             if(this.context !== tx.context){
+        //                 //TODO validate context is valid
+        //                 this.context = tx.context
+        //             }
+        //         } else {
+        //             log.debug(tag,"using default context:",this.context)
+        //             tx.context = this.context
+        //         }
+        //         if(!tx.context) throw Error("102: context is required on invocations!")
+        //
+        //         let timeout_height = tx.timeout_height
+        //         let source_channel = tx.source_channel
+        //         let source_port = tx.source_port
+        //         let sender = tx.sender
+        //         let receiver = tx.receiver
+        //         let token = tx.token
+        //
+        //         if(!source_channel) throw Error("103: missing source_channel")
+        //         if(!source_port) throw Error("104: missing source_port")
+        //         if(!sender) throw Error("105: missing sender")
+        //         if(!receiver) throw Error("106: missing receiver")
+        //         if(!token) throw Error("107: missing token")
+        //         if(!this.username) throw Error("108: missing username")
+        //
+        //         let memo = tx.memo || ''
+        //         let invocation:Invocation = {
+        //             type:'ibcdeposit',
+        //             context:tx.context,
+        //             username:this.username,
+        //             coin,
+        //             fee:tx.fee,
+        //             network:coin,
+        //             asset:coin,
+        //             // @ts-ignore
+        //             sender,
+        //             receiver,
+        //             token,
+        //             timeout_height,
+        //             source_channel,
+        //             source_port,
+        //             memo
+        //         }
+        //         if(tx.noBroadcast) invocation.noBroadcast = true
+        //
+        //         log.debug(tag,"invocation: ",invocation)
+        //         let result = await this.invoke.invoke(invocation)
+        //         if(!result) throw Error("Failed to create invocation!")
+        //         log.debug("result: ",result)
+        //
+        //         return result.invocationId
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         this.getValidators = async function () {
             let tag = TAG + " | getValidators | "
             try {
@@ -1130,7 +1157,7 @@ export class SDK {
         //     }
         // }
         //delegate
-        this.delegate = async function (tx:Delegate, asset:string) {
+        this.delegate = async function (tx:any, asset:string) {
             let tag = TAG + " | delegate | "
             try {
                 let coin = asset
@@ -1168,7 +1195,7 @@ export class SDK {
 
                 let validator = tx.validator
                 let memo = tx.memo || ''
-                let invocation:Invocation = {
+                let invocation:any = {
                     type:'delegate',
                     context:tx.context,
                     username:this.username,
@@ -1194,7 +1221,7 @@ export class SDK {
             }
         }
         //redelegate
-        this.redelegate = async function (tx:Redelegate, asset:string) {
+        this.redelegate = async function (tx:any, asset:string) {
             let tag = TAG + " | delegate | "
             try {
                 let coin = asset
@@ -1236,7 +1263,7 @@ export class SDK {
                 if(!this.username) throw Error("this.username required!")
 
                 let memo = tx.memo || ''
-                let invocation:Invocation = {
+                let invocation:any = {
                     type:'redelegate',
                     context:tx.context,
                     username:this.username,
@@ -1264,7 +1291,7 @@ export class SDK {
             }
         }
         //redelegate
-        this.joinPool = async function (tx:JoinPool, asset:string) {
+        this.joinPool = async function (tx:any, asset:string) {
             let tag = TAG + " | joinPool | "
             try {
                 let coin = asset
@@ -1299,7 +1326,7 @@ export class SDK {
                 if(!this.username) throw Error("username required!")
 
                 let memo = tx.memo || ''
-                let invocation:Invocation = {
+                let invocation:any = {
                     type:'osmosislpadd',
                     context:tx.context,
                     username:this.username,
@@ -1338,44 +1365,44 @@ export class SDK {
             }
         }
         // @ts-ignore
-        this.getFeesWithMemo = async function (memo?:string) {
-            let tag = TAG + " | getFeesWithMemo | "
-            try {
-                let params = {
-                    coin:'BTC',
-                    memo:"asdasdasdasdasda"
-                }
-                console.log("this.pioneerApi: ",this.pioneerApi)
-                let response = await this.pioneerApi.GetFeesWithMemo(null,params)
-                response = response.data
-                console.log("response: ",response)
-
-                let output = {
-                    fees:{
-                        type: 'byte',
-                        average:{
-                            amount:function(){
-                                return new BigNumber(response.fees.average)
-                            }
-                        },
-                        fast:{
-                            amount:function(){
-                                return new BigNumber(response.fees.fast)
-                            }
-                        },
-                        fastest:{
-                            amount:function(){
-                                return new BigNumber(response.fees.fastest)
-                            }
-                        }
-                    }
-                }
-
-                return output.fees
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
+        // this.getFeesWithMemo = async function (memo?:string) {
+        //     let tag = TAG + " | getFeesWithMemo | "
+        //     try {
+        //         let params = {
+        //             coin:'BTC',
+        //             memo:"asdasdasdasdasda"
+        //         }
+        //         console.log("this.pioneerApi: ",this.pioneerApi)
+        //         let response = await this.pioneerApi.GetFeesWithMemo(null,params)
+        //         response = response.data
+        //         console.log("response: ",response)
+        //
+        //         let output = {
+        //             fees:{
+        //                 type: 'byte',
+        //                 average:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.average)
+        //                     }
+        //                 },
+        //                 fast:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.fast)
+        //                     }
+        //                 },
+        //                 fastest:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.fastest)
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //
+        //         return output.fees
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         this.getTxCount = async function (asset:string) {
             let tag = TAG + " | getTxCount | "
             try {
@@ -1388,40 +1415,40 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-        // @ts-ignore
-        this.estimateFeesWithGasPricesAndLimits = async function (params:any) {
-            let tag = TAG + " | estimateFeesWithGasPricesAndLimits | "
-            try {
-                log.debug(tag,"params: ",params)
-                let response = await this.pioneerApi.EstimateFeesWithGasPricesAndLimits(null,params)
-                response = response.data
-                let output = {
-                    gasPrices:response.gasPrices,
-                    fees:{
-                        type: 'byte',
-                        average:{
-                            amount:function(){
-                                return new BigNumber(response.fees.average)
-                            }
-                        },
-                        fast:{
-                            amount:function(){
-                                return new BigNumber(response.fees.fast)
-                            }
-                        },
-                        fastest:{
-                            amount:function(){
-                                return new BigNumber(response.fees.fastest)
-                            }
-                        }
-                    }
-                }
-
-                return output
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
+        // // @ts-ignore
+        // this.estimateFeesWithGasPricesAndLimits = async function (params:any) {
+        //     let tag = TAG + " | estimateFeesWithGasPricesAndLimits | "
+        //     try {
+        //         log.debug(tag,"params: ",params)
+        //         let response = await this.pioneerApi.EstimateFeesWithGasPricesAndLimits(null,params)
+        //         response = response.data
+        //         let output = {
+        //             gasPrices:response.gasPrices,
+        //             fees:{
+        //                 type: 'byte',
+        //                 average:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.average)
+        //                     }
+        //                 },
+        //                 fast:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.fast)
+        //                     }
+        //                 },
+        //                 fastest:{
+        //                     amount:function(){
+        //                         return new BigNumber(response.fees.fastest)
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //
+        //         return output
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         this.approve = async function (asset:string,spender: string, sender: string, amount: string, noBroadcast?: boolean) {
             let tag = TAG + " | approve | "
             try {
@@ -1450,7 +1477,7 @@ export class SDK {
             try {
                 //
                 if(!this.username) throw Error("not paired! this.username required!")
-                let invocation:Invocation = {
+                let invocation:any = {
                     type:'replace',
                     invocationId,
                     context:this.context,
@@ -1469,47 +1496,47 @@ export class SDK {
             }
         }
         // @ts-ignore
-        this.estimateApproveFee = async function (contractAddress:string, asset: any) {
-            let tag = TAG + " | getWallet | "
-            try {
-                //TODO figuremeout
-                // const wallet = ethClient.getWallet();
-                // const assetAddress = asset.symbol.slice(asset.ticker.length + 1);
-                // const strip0x = (assetAddress.toUpperCase().indexOf('0X') === 0) ? assetAddress.substr(2) : assetAddress;
-                // const checkSummedAddress = ethers.utils.getAddress(strip0x);
-                // const contract = new ethers.Contract(checkSummedAddress, erc20ABI, wallet);
-                // const estimateGas = await contract.estimateGas.approve(contractAddress, checkSummedAddress);
-                // const prices = await ethClient.estimateGasPrices();
-                // const minimumWeiCost = prices.average.amount().multipliedBy(estimateGas.toNumber());
-
-                //TODO actually estimate fee
-                let response = 100000000
-                return new BigNumber(response,18)
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
+        // this.estimateApproveFee = async function (contractAddress:string, asset: any) {
+        //     let tag = TAG + " | getWallet | "
+        //     try {
+        //         //TODO figuremeout
+        //         // const wallet = ethClient.getWallet();
+        //         // const assetAddress = asset.symbol.slice(asset.ticker.length + 1);
+        //         // const strip0x = (assetAddress.toUpperCase().indexOf('0X') === 0) ? assetAddress.substr(2) : assetAddress;
+        //         // const checkSummedAddress = ethers.utils.getAddress(strip0x);
+        //         // const contract = new ethers.Contract(checkSummedAddress, erc20ABI, wallet);
+        //         // const estimateGas = await contract.estimateGas.approve(contractAddress, checkSummedAddress);
+        //         // const prices = await ethClient.estimateGasPrices();
+        //         // const minimumWeiCost = prices.average.amount().multipliedBy(estimateGas.toNumber());
+        //
+        //         //TODO actually estimate fee
+        //         let response = 100000000
+        //         return new BigNumber(response,18)
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         // @ts-ignore
-        this.estimateFee = async function ({sourceAsset, ethClient, ethInbound, inputAmount, memo}: any) {
-            let tag = TAG + " | estimateFee | "
-            try {
-
-                let params = {
-                    coin:"ETH",
-                    network:"ETH",
-                    amount:assetToBase(assetAmount(inputAmount, 18)).amount().toFixed(),
-                    contract:"0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a",
-                    recipient:ethInbound.address,
-                    memo
-                }
-                let response = await this.pioneerApi.EstimateFeesWithGasPricesAndLimits(null,params)
-                response = response.data
-
-                return new BigNumber(response,18)
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
+        // this.estimateFee = async function ({sourceAsset, ethClient, ethInbound, inputAmount, memo}: any) {
+        //     let tag = TAG + " | estimateFee | "
+        //     try {
+        //
+        //         let params = {
+        //             coin:"ETH",
+        //             network:"ETH",
+        //             amount:assetToBase(assetAmount(inputAmount, 18)).amount().toFixed(),
+        //             contract:"0x9d496De78837f5a2bA64Cb40E62c19FBcB67f55a",
+        //             recipient:ethInbound.address,
+        //             memo
+        //         }
+        //         let response = await this.pioneerApi.EstimateFeesWithGasPricesAndLimits(null,params)
+        //         response = response.data
+        //
+        //         return new BigNumber(response,18)
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         // @ts-ignore
         this.isApproved = async function (routerAddress:string,tokenAddress:string,amount:any) {
             let tag = TAG + " | isApproved | "
@@ -1701,81 +1728,81 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-        this.buildSwap = async function (swap:Swap,options:any, asset:string) {
-            let tag = TAG + " | buildSwap | "
-            try {
-                if(!asset) throw Error("asset required!")
-                if(!swap.addressFrom) throw Error("invalid swap input!")
-
-                log.debug(tag,"swap: ",swap)
-                log.debug(tag,"options: ",options)
-                //verbose
-                let verbose
-                let txidOnResp
-                if(options){
-                    verbose = options.verbose
-                    txidOnResp = options.txidOnResp
-                }
-                let coin = asset
-                log.debug(tag,"asset: ",asset)
-                log.debug(tag,"swap: ",swap)
-                log.debug(tag,"swap.amount: ",swap.amount)
-                log.debug(tag,"tx.amount.amount(): ",swap.amount.amount())
-                // log.debug(tag,"tx.amount.amount().toFixed(): ",swap.amount.amount().toNumber())
-                let amount = swap.amount.amount()
-                amount = nativeToBaseAmount(asset,amount)
-                amount = amount.toString()
-
-                //if native
-                // let amount = swap.amount.toString()
-                //amount = nativeToBaseAmount(asset,amount)
-                log.debug(tag,"amount (final): ",amount)
-                if(!amount) throw Error("Failed to get amount!")
-                if(!this.username) throw Error("Failed to get this.username!")
-                // if(typeof(amount) !== 'string')
-                //TODO min transfer size 10$??
-                //TODO validate addresses
-                //TODO validate midgard addresses not expired
-
-                let memo = swap.memo || ''
-                if(!swap.addressFrom) throw Error("from address required!")
-                let invocation:Invocation = {
-                    fee: {
-                        priority:3
-                    },
-                    addressFrom:swap.addressFrom,
-                    context:this.context,
-                    type:'swap',
-                    username:this.username,
-                    inboundAddress:swap.inboundAddress,
-                    network:coin,
-                    asset:coin,
-                    coin,
-                    amount,
-                    memo
-                }
-                if(swap.noBroadcast) invocation.noBroadcast = true
-
-                log.debug(tag,"**** invocation: ",invocation)
-                if(!invocation.addressFrom) throw Error("from address required!")
-                let result = await this.invoke.invoke(invocation)
-                log.debug(tag,"result: ",result)
-
-                if(!verbose && !txidOnResp){
-                    return result.invocationId
-                } else if(!verbose && txidOnResp){
-                    return result.txid
-                }else if(verbose){
-                    return result
-                } else {
-                    throw Error("102: Unhandled configs!")
-                }
-
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
-        this.transfer = async function (tx:Transfer, options:any, asset:string) {
+        // this.buildSwap = async function (swap:Swap,options:any, asset:string) {
+        //     let tag = TAG + " | buildSwap | "
+        //     try {
+        //         if(!asset) throw Error("asset required!")
+        //         if(!swap.addressFrom) throw Error("invalid swap input!")
+        //
+        //         log.debug(tag,"swap: ",swap)
+        //         log.debug(tag,"options: ",options)
+        //         //verbose
+        //         let verbose
+        //         let txidOnResp
+        //         if(options){
+        //             verbose = options.verbose
+        //             txidOnResp = options.txidOnResp
+        //         }
+        //         let coin = asset
+        //         log.debug(tag,"asset: ",asset)
+        //         log.debug(tag,"swap: ",swap)
+        //         log.debug(tag,"swap.amount: ",swap.amount)
+        //         log.debug(tag,"tx.amount.amount(): ",swap.amount.amount())
+        //         // log.debug(tag,"tx.amount.amount().toFixed(): ",swap.amount.amount().toNumber())
+        //         let amount = swap.amount.amount()
+        //         amount = nativeToBaseAmount(asset,amount)
+        //         amount = amount.toString()
+        //
+        //         //if native
+        //         // let amount = swap.amount.toString()
+        //         //amount = nativeToBaseAmount(asset,amount)
+        //         log.debug(tag,"amount (final): ",amount)
+        //         if(!amount) throw Error("Failed to get amount!")
+        //         if(!this.username) throw Error("Failed to get this.username!")
+        //         // if(typeof(amount) !== 'string')
+        //         //TODO min transfer size 10$??
+        //         //TODO validate addresses
+        //         //TODO validate midgard addresses not expired
+        //
+        //         let memo = swap.memo || ''
+        //         if(!swap.addressFrom) throw Error("from address required!")
+        //         let invocation:Invocation = {
+        //             fee: {
+        //                 priority:3
+        //             },
+        //             addressFrom:swap.addressFrom,
+        //             context:this.context,
+        //             type:'swap',
+        //             username:this.username,
+        //             inboundAddress:swap.inboundAddress,
+        //             network:coin,
+        //             asset:coin,
+        //             coin,
+        //             amount,
+        //             memo
+        //         }
+        //         if(swap.noBroadcast) invocation.noBroadcast = true
+        //
+        //         log.debug(tag,"**** invocation: ",invocation)
+        //         if(!invocation.addressFrom) throw Error("from address required!")
+        //         let result = await this.invoke.invoke(invocation)
+        //         log.debug(tag,"result: ",result)
+        //
+        //         if(!verbose && !txidOnResp){
+        //             return result.invocationId
+        //         } else if(!verbose && txidOnResp){
+        //             return result.txid
+        //         }else if(verbose){
+        //             return result
+        //         } else {
+        //             throw Error("102: Unhandled configs!")
+        //         }
+        //
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
+        this.transfer = async function (tx:any, options:any, asset:string) {
             let tag = TAG + " | transfer | "
             try {
                 let verbose
@@ -1823,7 +1850,7 @@ export class SDK {
                 let memo = tx.memo || ''
                 if(!to) throw Error("invalid TX missing recipient")
                 if(!this.username) throw Error("this.username required")
-                let invocation:Invocation = {
+                let invocation:any = {
                     type:'transfer',
                     context:tx.context,
                     username:this.username,

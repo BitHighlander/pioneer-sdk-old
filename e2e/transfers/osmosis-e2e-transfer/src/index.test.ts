@@ -29,8 +29,6 @@
 
  */
 
-import {Transfer} from "@pioneer-sdk/types";
-
 require("dotenv").config()
 require('dotenv').config({path:"../../.env"});
 require("dotenv").config({path:'../../../.env'})
