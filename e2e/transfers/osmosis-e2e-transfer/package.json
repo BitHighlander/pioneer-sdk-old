@@ -3,7 +3,7 @@
   "version": "8.1.42",
   "scripts": {
     "yarn": "yarn",
-    "start": "node lib/index.js",
+    "start": "node dist/index.js",
     "build": "tsc -p .",
     "dev": "rm -Rf ~/.pioneer && npm run build && npm run start",
     "test": "rm -Rf ~/.pioneer && jest --verbose --silent=true  --forceExit",

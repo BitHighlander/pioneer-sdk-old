@@ -1,13 +1,23 @@
 {
+  "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "target": "es5",
     "module": "commonjs",
-    "lib": ["es6", "es2015", "dom"],
-    "declaration": true,
-    "outDir": "lib",
-    "rootDir": "src",
-    "strict": true,
-    "types": ["node","jest"],
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "outDir": "./dist"
+  },
+  "watchOptions": {
+    // Use native file system events for files and directories
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    // Poll files for updates more frequently
+    // when they're updated a lot. (use as fallback)
+    "fallbackPolling": "dynamicPriority",
+    // Don't coalesce watch notification
+    "synchronousWatchDirectory": true
+  },
+  "include": [
+    "src/**/*",
+    "../../../node_modules/@types/node/globals.d.ts"
+  ],
+  "exclude": ["node_modules", "src/integration", "**/*.test.ts", "**/*.spec.ts"]
 }

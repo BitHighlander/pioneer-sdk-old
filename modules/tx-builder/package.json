@@ -1,8 +1,8 @@
 {
   "name": "@pioneer-sdk/tx-builder",
   "version": "0.0.1",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "npm": "npm i",
     "npm-update": "npm update",

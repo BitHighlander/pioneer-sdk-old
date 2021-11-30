@@ -4,7 +4,7 @@ require("dotenv").config({path:'../../../../.env'})
 require("dotenv").config({path:'../../../../../.env'})
 
 const prettyjson = require('prettyjson');
-let SDK = require('../lib/index.js')
+let SDK = require('../dist/index.js')
 
 // let urlSpec = "http://127.0.0.1:9001/spec/swagger.json"
 let urlSpec = process.env['URL_PIONEER_SPEC']
