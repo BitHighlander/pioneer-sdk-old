@@ -1289,13 +1289,13 @@
     google-protobuf "^3.7.0-rc.2"
     pbjs "^0.0.5"
 
-"@keepkey/keepkey-sdk@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@keepkey/keepkey-sdk/-/keepkey-sdk-0.0.3.tgz#48e179353ff758a1ff43a7ae017dab312537b051"
-  integrity sha512-UUGzl9AErp2DuDH4vi3sE6iknqo1jJnpuZVOiZsPIENCc6Hx8pNMTzkTjVk4T/jR8QYdVZR/V/Y5jmXQPr8tlA==
+"@keepkey/keepkey-sdk@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@keepkey/keepkey-sdk/-/keepkey-sdk-0.0.4.tgz#b5fc500cbde1b3eaafb550fb7c16a1c345836105"
+  integrity sha512-tzCP+8+T6lomVO0KkpNt9n/RbH/UR03ZgPCp6AzVHKsXB0Ajw9U9IACK0/G6J9zlJ9P5ZhmLeitpgyP8j3ktUg==
   dependencies:
     "@pioneer-platform/loggerdog" "^8.1.17"
-    "@pioneer-platform/pioneer-coins" "^8.1.39"
+    "@pioneer-platform/pioneer-coins" "8.1.40"
     "@shapeshiftoss/hdwallet-core" latest
     "@types/node" "^13.13.48"
     bytebuffer "^5.0.1"
@@ -1354,7 +1354,29 @@
     typescript "^3.9.7"
     when "^3.7.8"
 
-"@pioneer-platform/pioneer-coins@^8.1.19", "@pioneer-platform/pioneer-coins@^8.1.39":
+"@pioneer-platform/pioneer-coins@8.1.40":
+  version "8.1.40"
+  resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-coins/-/pioneer-coins-8.1.40.tgz#37fe2512a499189f90b877be1e5e17ed7b295492"
+  integrity sha512-ys3iNQwJc8xoslWCYZfUTR0hI3rT2LRxjXhp8wCJtbbzH1ltDMYYvkP7fPs5cw2pm2/I3FrY0o51DX81Y8xfTA==
+  dependencies:
+    "@pioneer-platform/loggerdog" "^8.1.17"
+    bech32 "^1.1.4"
+    bignumber.js "^9.0.1"
+    bip84 "^0.2.5"
+    bitcoin-regex "^2.0.0"
+    bitcoincash-regex "^1.1.8"
+    bitcoinjs-lib "^5.2.0"
+    crypto-js "^4.0.0"
+    dash-regex "^1.0.10"
+    dogecoin-regex "^1.0.9"
+    ethereum-regex "^1.1.12"
+    ethereumjs-util "^7.0.10"
+    litecoin-regex "^1.0.8"
+    monero-regex "^1.0.8"
+    neo-regex "^1.0.7"
+    ripple-regex "^1.1.8"
+
+"@pioneer-platform/pioneer-coins@^8.1.19":
   version "8.1.39"
   resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-coins/-/pioneer-coins-8.1.39.tgz#b90eac78181ebd140c1b2ce7e0a84427fb4d80fa"
   integrity sha512-oLRoSvRf0nihedGGEAkCwjNsr2afEk1HT/uGYNL2N+DkTgZkLWKPy1Brmu536NH2W3Wmg2KU8Ppt5+atlLNG9A==

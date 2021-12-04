@@ -15,7 +15,7 @@
     "docker:push:all": "npm run docker:build && npm run docker:tag && npm run docker:push"
   },
   "dependencies": {
-    "@keepkey/keepkey-sdk": "^0.0.3",
+    "@keepkey/keepkey-sdk": "0.0.4",
     "@pioneer-platform/loggerdog": "^8.1.17",
     "@pioneer-platform/midgard-client": "^8.1.30",
     "@pioneer-sdk/sdk": "0.0.1",

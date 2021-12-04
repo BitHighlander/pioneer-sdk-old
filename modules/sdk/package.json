@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.16.3",
+    "@pioneer-platform/pioneer-coins": "8.1.40",
     "@pioneer-platform/pioneer-events": "latest",
     "@pioneer-platform/pioneer-invoke": "^8.1.35",
     "@pioneer-platform/pioneer-types": "^8.1.48",
