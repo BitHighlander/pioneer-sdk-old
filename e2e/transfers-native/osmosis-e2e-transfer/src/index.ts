@@ -26,6 +26,9 @@ let {
     nativeToBaseAmount,
 } = require("@pioneer-sdk/coins")
 
+//lib
+import { ChainTypes } from '@shapeshiftoss/types'
+
 let BLOCKCHAIN = 'osmosis'
 let ASSET = 'OSMO'
 let MIN_BALANCE = process.env['MIN_BALANCE_OSMO'] || "0.04"
@@ -53,14 +56,36 @@ const test_service = async function () {
         assert(queryKey)
         assert(username)
 
+        const unchainedUrls = {
+            [ChainTypes.Bitcoin]: {
+                httpUrl: 'https://dev-api.bitcoin.shapeshift.com',
+                wsUrl: 'wss://dev-api.bitcoin.shapeshift.com'
+            },
+            [ChainTypes.Ethereum]: {
+                httpUrl: 'https://dev-api.ethereum.shapeshift.com',
+                wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
+            },
+            [ChainTypes.Osmosis]: {
+                // httpUrl: 'https://dev-api.osmosis.shapeshift.com',
+                // wsUrl: 'wss://dev-api.osmosis.shapeshift.com'
+                httpUrl: 'https://dev-api.ethereum.shapeshift.com',
+                wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
+            }
+        }
+        assert(unchainedUrls)
+        log.info(tag,"unchainedUrls: ",unchainedUrls)
+
         let config = {
             queryKey,
             username,
             spec,
-            wss
+            wss,
+            unchainedUrls
         }
         log.debug(tag,"config: ",config)
         let app = new SDK.SDK(spec,config)
+
+        //TODO enforce unchaind for each asset
         let seedChains = ['ethereum','thorchain','bitcoin','osmosis','cosmos']
         let API = await app.init(seedChains)
         assert(API)
@@ -90,9 +115,9 @@ const test_service = async function () {
         log.info(tag,"registerResult: ",registerResult)
 
         //TODO verify sdk state
-        let masterAddress = await app.getAddress(ASSET)
-        assert(masterAddress)
-        log.test(tag,"masterAddress: ",masterAddress)
+        // let masterAddress = await app.getAddress(ASSET)
+        // assert(masterAddress)
+        // log.test(tag,"masterAddress: ",masterAddress)
 
         //build tx
         // let options:any = {

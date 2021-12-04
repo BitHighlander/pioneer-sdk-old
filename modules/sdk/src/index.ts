@@ -35,8 +35,8 @@ let Invoke = require("@pioneer-platform/pioneer-invoke")
 /*
     ShapeShiftOss
  */
-// import { NativeAdapterArgs, NativeHDWallet } from '@shapeshiftoss/hdwallet-native'
-// import { UnchainedUrls, ChainAdapterManager } from '@shapeshiftoss/chain-adapters'
+import { NativeAdapterArgs, NativeHDWallet } from '@shapeshiftoss/hdwallet-native'
+import { ChainAdapterManager } from '@shapeshiftoss/chain-adapters'
 // import { caip2 } from '@shapeshiftoss/caip'
 // import { Asset, ChainTypes, NetworkTypes } from '@shapeshiftoss/types'
 // import { getPriceHistory } from '@shapeshiftoss/market-service'
@@ -85,6 +85,7 @@ let Invoke = require("@pioneer-platform/pioneer-invoke")
 // } from "@pioneer-platform/pioneer-types";
 
 export class SDK {
+    public unchainedUrls: any;
     public spec: any;
     public pioneerApi: any;
     public init: (blockchains: any) => Promise<any>;
@@ -179,6 +180,7 @@ export class SDK {
     public buildTx: (tx: any) => Promise<any>;
     constructor(spec:string,config:any) {
         if(!config.username) throw Error("username required to init!")
+        this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
         this.url = config.url || 'unknown'
         this.dbPubkeys = Datastore.create('./path/to/dbPubkeys.db')
@@ -280,20 +282,10 @@ export class SDK {
                     }
                 });
 
-                //TODO move this to package/or api?
-                // const unchainedUrls = {
-                //     [ChainTypes.Bitcoin]: {
-                //         httpUrl: 'https://dev-api.bitcoin.shapeshift.com',
-                //         wsUrl: 'wss://dev-api.bitcoin.shapeshift.com'
-                //     },
-                //     [ChainTypes.Ethereum]: {
-                //         httpUrl: 'https://dev-api.ethereum.shapeshift.com',
-                //         wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
-                //     }
-                // }
-                //
-                // //unchained
-                // this.chainAdapterManager = new ChainAdapterManager(unchainedUrls)
+                //for each blockchain validate if unchained supported
+
+                //unchained
+                this.chainAdapterManager = new ChainAdapterManager(this.unchainedUrls)
 
                 //todo sub to unchained txs?
 
@@ -570,14 +562,17 @@ export class SDK {
                     log.debug(tag,"wallet: ",wallet)
 
                     //load wallet into local HDwallet
-                    // const nativeAdapterArgs: NativeAdapterArgs = {
-                    //     mnemonic: process.env.CLI_MNEMONIC,
-                    //     deviceId: 'test'
-                    // }
+                    const nativeAdapterArgs: NativeAdapterArgs = {
+                        mnemonic: process.env.CLI_MNEMONIC,
+                        deviceId: 'test'
+                    }
                     //
-                    // //set SDK to HDwallet
-                    // this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
-                    // await this.HDWallet.initialize()
+                    //set SDK to HDwallet
+                    this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
+                    await this.HDWallet.initialize()
+
+                    //get pubkeys
+
 
                     //register
                     register = {
@@ -683,8 +678,8 @@ export class SDK {
             let tag = TAG + " | getAddress | "
             try {
                 //filter by address
-                let pubkey = this.info.pubkeys.filter((e:any) => e.symbol === asset)[0]
-                //prefure context
+                let pubkey = this.pubkeys.filter((e:any) => e.symbol === asset)[0]
+                //TODO prefure context
 
                 if(showOnDevice){
                     //switch by asset

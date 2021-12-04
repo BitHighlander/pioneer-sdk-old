@@ -1,5 +1,5 @@
 {
-  "name": "@pioneer-platform/osmosis-e2e-transfer",
+  "name": "@pioneer-platform/osmosis-e2e-transfer-native",
   "version": "8.1.42",
   "scripts": {
     "yarn": "yarn",
