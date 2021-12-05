@@ -14,15 +14,18 @@ const Events = require("@pioneer-platform/pioneer-events")
 const Datastore = require('nedb-promises')
 const keccak256 = require('keccak256')
 let {
+    getPaths,
     getPrecision,
     getExplorerUrl,
     getExplorerAddressUrl,
     getExplorerTxUrl,
     baseAmountToNative,
     nativeToBaseAmount,
+    getNativeAssetForBlockchain,
     assetToBase,
     assetAmount,
     getSwapProtocals,
+    normalize_pubkeys,
 } = require('@pioneer-sdk/coins')
 
 let TxBuilder = require('@pioneer-sdk/tx-builder')
@@ -178,6 +181,7 @@ export class SDK {
     public chainAdapterManager: any;
     public HDWallet: any;
     public buildTx: (tx: any) => Promise<any>;
+    private getPubkeys: () => Promise<any>;
     constructor(spec:string,config:any) {
         if(!config.username) throw Error("username required to init!")
         this.unchainedUrls = config.unchainedUrls
@@ -257,6 +261,124 @@ export class SDK {
                     output.balances.push(balance)
                     this.dbBalances.insert(balance)
                 }
+                return output
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
+        this.getPubkeys = async function () {
+            let tag = TAG + " | getPubkeys | "
+            try {
+                if(!this.blockchains || this.blockchains.length === 0) throw Error("Blockchains required!")
+                let output:any = {}
+                log.info(tag,"blockchains: ",this.blockchains)
+                //let paths = this.paths(this.blockchains)
+                let paths = getPaths(this.blockchains)
+                log.info(tag,"getPaths: ",paths)
+                //verify paths
+                for(let i = 0; i < this.blockchains.length; i++){
+                    let blockchain = this.blockchains[i]
+                    let symbol = getNativeAssetForBlockchain(blockchain)
+                    log.info(tag,"symbol: ",symbol)
+                    //find in pubkeys
+                    let isFound = paths.find((path: { blockchain: string; }) => {
+                        return path.blockchain === blockchain
+                    })
+                    if(!isFound){
+                        throw Error("Failed to find path for blockchain: "+blockchain)
+                    }
+                }
+
+                let pathsKeepkey:any = []
+                for(let i = 0; i < paths.length; i++){
+                    let path = paths[i]
+                    let pathForKeepkey:any = {}
+                    //send coin as bitcoin
+                    pathForKeepkey.symbol = path.symbol
+                    pathForKeepkey.addressNList = path.addressNList
+                    //why
+                    pathForKeepkey.coin = 'Bitcoin'
+                    pathForKeepkey.script_type = 'p2pkh'
+                    //showDisplay
+                    pathForKeepkey.showDisplay = false
+                    pathsKeepkey.push(pathForKeepkey)
+                }
+
+                log.notice("***** paths IN: ",pathsKeepkey.length)
+                //NOTE: keepkey returns an ordered array.
+                //To build verbose pubkey info we must rebuild based on order
+                console.log("pathsKeepkey: ",pathsKeepkey)
+                log.info(tag,"this.HDWallet: ",this.HDWallet)
+                log.info(tag,"this.HDWallet: ",this.HDWallet.wallet)
+                const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
+                log.notice("***** pubkeys OUT: ",result)
+                if(pathsKeepkey.length !== result.length) {
+                    log.error(tag, {pathsKeepkey})
+                    log.error(tag, {result})
+                    throw Error("Device unable to get path!")
+                }
+                log.debug("rawResult: ",result)
+                log.debug("rawResult: ",JSON.stringify(result))
+
+
+                //rebuild
+                let pubkeys = await normalize_pubkeys('keepkey',result,paths)
+                output.pubkeys = pubkeys
+                if(pubkeys.length !== result.length) {
+                    log.error(tag, {pathsKeepkey})
+                    log.error(tag, {result})
+                    throw Error("Failed to Normalize pubkeys!")
+                }
+                log.debug(tag,"pubkeys: (normalized) ",pubkeys.length)
+                log.debug(tag,"pubkeys: (normalized) ",pubkeys)
+
+                //add feature info to pubkey
+                let keyedWallet:any = {}
+                for(let i = 0; i < pubkeys.length; i++){
+                    let pubkey = pubkeys[i]
+                    if(!keyedWallet[pubkey.symbol]){
+                        keyedWallet[pubkey.symbol] = pubkey
+                    }else{
+                        if(!keyedWallet['available']) keyedWallet['available'] = []
+                        //add to secondary pubkeys
+                        keyedWallet['available'].push(pubkey)
+                    }
+
+                }
+
+                //verify pubkeys
+                for(let i = 0; i < this.blockchains.length; i++){
+                    let blockchain = this.blockchains[i]
+                    let symbol = getNativeAssetForBlockchain(blockchain)
+                    log.debug(tag,"symbol: ",symbol)
+                    //find in pubkeys
+                    let isFound = pubkeys.find((path: { blockchain: string; }) => {
+                        return path.blockchain === blockchain
+                    })
+                    if(!isFound){
+                        throw Error("Failed to find pubkey for blockchain: "+blockchain)
+                    }
+                    //verify master
+                }
+
+                let features = this.HDWallet.features;
+                log.info(tag,"vender: ",features)
+                log.debug(tag,"vender: ",features.deviceId)
+
+                //keep it short but unique. label + last 4 of id
+                let walletId = "kk-"+features.label+"-"+features.deviceId.replace(/.(?=.{4})/g, '');
+                let watchWallet = {
+                    "WALLET_ID": walletId,
+                    "TYPE": "watch",
+                    "CREATED": new Date().getTime(),
+                    "VERSION": "0.1.3",
+                    "BLOCKCHAINS: ":this.blockchains,
+                    "PUBKEYS":pubkeys,
+                    "WALLET_PUBLIC":keyedWallet,
+                    "PATHS":paths
+                }
+                log.debug(tag,"writePathPub: ",watchWallet)
+                output.wallet = watchWallet
                 return output
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -555,10 +677,6 @@ export class SDK {
                     }
                 } else if(wallet.type === 'native'){
                     log.debug(tag,"wallet: ",wallet)
-                    if(!wallet.pubkeys) throw Error('invalid citadel wallet!')
-                    if(!wallet.serialized.WALLET_ID) throw Error('invalid serialized wallet!')
-                    this.context = wallet.serialized.WALLET_ID
-
                     log.debug(tag,"wallet: ",wallet)
 
                     //load wallet into local HDwallet
@@ -572,19 +690,27 @@ export class SDK {
                     await this.HDWallet.initialize()
 
                     //get pubkeys
+                    //get serailized wallet
+                    let pubkeysResp = await this.getPubkeys()
+                    let walletWatch = pubkeysResp.wallet
+                    let pubkeys = pubkeysResp.pubkeys
 
+                    if(!wallet.pubkeys) throw Error('invalid citadel wallet!')
+                    if(!wallet.serialized.WALLET_ID) throw Error('invalid serialized wallet!')
+                    this.context = walletWatch.WALLET_ID
+                    log.info(tag,"new context: ",this.context)
 
                     //register
                     register = {
                         username:this.username,
                         blockchains:this.blockchains,
-                        context:wallet.serialized.WALLET_ID,
+                        context:this.context,
                         walletDescription:{
-                            context:wallet.serialized.WALLET_ID,
-                            type:'keepkey'
+                            context:this.context,
+                            type:'native'
                         },
                         data:{
-                            pubkeys:wallet.pubkeys
+                            pubkeys
                         },
                         queryKey:this.queryKey,
                         auth:'lol',
@@ -957,7 +1083,8 @@ export class SDK {
                         log.info(tag,"signedTx: ",signedTx)
                         break;
                     case 'OSMO':
-                        signedTx = await this.HDWallet.hdwallet.osmosisSignTx(unsignedTx.HDwalletPayload)
+                        log.info(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
+                        signedTx = await this.HDWallet.osmosisSignTx(unsignedTx.HDwalletPayload)
                         log.info(tag,"signedTx: ",signedTx)
 
                         let broadcastString = {
