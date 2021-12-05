@@ -310,6 +310,8 @@ export class SDK {
                 console.log("pathsKeepkey: ",pathsKeepkey)
                 log.info(tag,"this.HDWallet: ",this.HDWallet)
                 log.info(tag,"this.HDWallet: ",this.HDWallet.wallet)
+                log.info(tag,"this.HDWallet: ",this.HDWallet.isInitialized)
+                log.info(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
                 const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
                 log.notice("***** pubkeys OUT: ",result)
                 if(pathsKeepkey.length !== result.length) {
@@ -324,6 +326,7 @@ export class SDK {
                 //rebuild
                 let pubkeys = await normalize_pubkeys('keepkey',result,paths)
                 output.pubkeys = pubkeys
+                this.pubkeys = pubkeys
                 if(pubkeys.length !== result.length) {
                     log.error(tag, {pathsKeepkey})
                     log.error(tag, {result})
@@ -361,12 +364,13 @@ export class SDK {
                     //verify master
                 }
 
-                let features = this.HDWallet.features;
-                log.info(tag,"vender: ",features)
-                log.debug(tag,"vender: ",features.deviceId)
+                // let features = this.HDWallet.features;
+                // log.info(tag,"vender: ",features)
+                // log.debug(tag,"vender: ",features.deviceId)
 
                 //keep it short but unique. label + last 4 of id
-                let walletId = "kk-"+features.label+"-"+features.deviceId.replace(/.(?=.{4})/g, '');
+                let masterEth = await this.getAddress('ETH')
+                let walletId = masterEth+":native.wallet"
                 let watchWallet = {
                     "WALLET_ID": walletId,
                     "TYPE": "watch",
@@ -681,13 +685,17 @@ export class SDK {
 
                     //load wallet into local HDwallet
                     const nativeAdapterArgs: NativeAdapterArgs = {
-                        mnemonic: process.env.CLI_MNEMONIC,
+                        mnemonic: wallet.mnemonic,
                         deviceId: 'test'
                     }
                     //
                     //set SDK to HDwallet
                     this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
-                    await this.HDWallet.initialize()
+                    let resultInit = await this.HDWallet.initialize()
+                    log.info(tag,"resultInit: ",resultInit)
+                    let isInitialized = this.HDWallet.isInitialized()
+                    log.info(tag,"isInitialized: ",isInitialized)
+                    if(!isInitialized) throw Error("failed to initialize")
 
                     //get pubkeys
                     //get serailized wallet
@@ -695,8 +703,6 @@ export class SDK {
                     let walletWatch = pubkeysResp.wallet
                     let pubkeys = pubkeysResp.pubkeys
 
-                    if(!wallet.pubkeys) throw Error('invalid citadel wallet!')
-                    if(!wallet.serialized.WALLET_ID) throw Error('invalid serialized wallet!')
                     this.context = walletWatch.WALLET_ID
                     log.info(tag,"new context: ",this.context)
 
