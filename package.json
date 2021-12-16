@@ -1,6 +1,6 @@
 {
   "name": "pioneer-sdk",
-  "version": "0.0.1",
+  "version": "0.0.",
   "private": true,
   "workspaces": {
     "packages": [
@@ -19,6 +19,7 @@
     "test": "make test",
     "test-debug": "make test debug=true",
     "release": "make && make up=release",
+    "link": "yarn link @shapeshiftoss/chain-adapters @shapeshiftoss/unchained-client",
     "dev:watch:all": "npm run dev:watch:pioneer && npm run dev:watch:pioneer-app && npm run dev:watch:pioneer-sdk && npm run dev:watch:pioneer-xchain-client",
     "dev:watch:pioneer": "cd modules/sdk/pioneer && npm run build:watch",
     "dev:watch:pioneer-app": "cd modules/sdk/pioneer-app && npm run build:watch",

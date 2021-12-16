@@ -65,12 +65,12 @@ const test_service = async function () {
                 httpUrl: 'https://dev-api.ethereum.shapeshift.com',
                 wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
             },
-            [ChainTypes.Osmosis]: {
-                // httpUrl: 'https://dev-api.osmosis.shapeshift.com',
-                // wsUrl: 'wss://dev-api.osmosis.shapeshift.com'
-                httpUrl: 'https://dev-api.ethereum.shapeshift.com',
-                wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
-            }
+            // [ChainTypes.Osmosis]: {
+            //     // httpUrl: 'https://dev-api.osmosis.shapeshift.com',
+            //     // wsUrl: 'wss://dev-api.osmosis.shapeshift.com'
+            //     httpUrl: 'https://dev-api.ethereum.shapeshift.com',
+            //     wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
+            // }
         }
         assert(unchainedUrls)
         log.info(tag,"unchainedUrls: ",unchainedUrls)

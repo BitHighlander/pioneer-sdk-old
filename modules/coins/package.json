@@ -2,7 +2,7 @@
   "name": "@pioneer-sdk/coins",
   "version": "0.0.1",
   "main": "./dist/index.js",
-  "types": "./lib/main.d.ts",
+  "types": "./dist/main.d.ts",
   "_moduleAliases": {
     "@coins": "lib/coins"
   },

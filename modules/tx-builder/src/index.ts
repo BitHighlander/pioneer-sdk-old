@@ -49,12 +49,6 @@ import { FioActionParameters } from "fiosdk-offline";
 //Highlander fork
 // const hdwallet = require("@bithighlander/hdwallet-core")
 
-// SS public TODO catch up public repo
-const hdwallet = require("@shapeshiftoss/hdwallet-core")
-
-//global
-const keyring = new hdwallet.Keyring()
-
 const HD_RUNE_KEYPATH="m/44'/931'/0'/0/0"
 const RUNE_CHAIN="thorchain"
 const RUNE_BASE=100000000

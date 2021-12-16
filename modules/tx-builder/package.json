@@ -1,6 +1,6 @@
 {
   "name": "@pioneer-sdk/tx-builder",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -17,8 +17,7 @@
     "@pioneer-platform/pioneer-types": "^8.1.48",
     "@pioneer-sdk/coins": "^0.0.1",
     "@pioneer-sdk/types": "^0.0.1",
-    "@shapeshiftoss/hdwallet-core": "latest",
-    "@shapeshiftoss/hdwallet-native": "latest",
+    "fiosdk-offline": "^1.2.21",
     "typescript": "4.4",
     "web3-utils": "^1.3.5"
   },
