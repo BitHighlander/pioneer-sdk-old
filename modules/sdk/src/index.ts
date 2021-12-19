@@ -183,7 +183,7 @@ export class SDK {
     public loadPubkeys: (pubkeys: any) => void;
     public dbPubkeys: any;
     public dbBalances: any;
-    public pairWallet: (wallet: any) => Promise<any>;
+    public pairWallet: (walletType:string, wallet: any) => Promise<any>;
     public chainAdapterManager: any;
     public HDWallet: any;
     public buildTx: (tx: any) => Promise<any>;
@@ -192,8 +192,9 @@ export class SDK {
     private checkBridge: () => void;
     private bridge: string;
     private pair: (code: string) => Promise<any>;
+    getCodeInfo: (code: string) => Promise<any>;
+    private getBridgeUser: () => Promise<any>;
     constructor(spec:string,config:any) {
-        if(!config.username) throw Error("username required to init!")
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
         this.url = config.url || 'unknown'
@@ -318,13 +319,12 @@ export class SDK {
                 log.notice("***** paths IN: ",pathsKeepkey.length)
                 //NOTE: keepkey returns an ordered array.
                 //To build verbose pubkey info we must rebuild based on order
-                console.log("pathsKeepkey: ",pathsKeepkey)
-                log.info(tag,"this.HDWallet: ",this.HDWallet)
-                log.info(tag,"this.HDWallet: ",this.HDWallet.wallet)
-                log.info(tag,"this.HDWallet: ",this.HDWallet.isInitialized)
+                // console.log("pathsKeepkey: ",pathsKeepkey)
+                // log.info(tag,"this.HDWallet: ",this.HDWallet)
+                // log.info(tag,"this.HDWallet: ",this.HDWallet.wallet)
                 log.info(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
                 const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
-                log.notice("***** pubkeys OUT: ",result)
+                log.info("***** pubkeys OUT: ",result)
                 if(pathsKeepkey.length !== result.length) {
                     log.error(tag, {pathsKeepkey})
                     log.error(tag, {result})
@@ -381,7 +381,7 @@ export class SDK {
 
                 //keep it short but unique. label + last 4 of id
                 let masterEth = await this.getAddress('ETH')
-                let walletId = masterEth+":native.wallet"
+                let walletId = masterEth+".wallet"
                 let watchWallet = {
                     "WALLET_ID": walletId,
                     "TYPE": "watch",
@@ -392,7 +392,8 @@ export class SDK {
                     "WALLET_PUBLIC":keyedWallet,
                     "PATHS":paths
                 }
-                log.debug(tag,"writePathPub: ",watchWallet)
+                log.info(tag,"writePathPub: ",watchWallet)
+                output.context = walletId
                 output.wallet = watchWallet
                 return output
             } catch (e) {
@@ -403,7 +404,7 @@ export class SDK {
             let tag = TAG + " | init_wallet | "
             try{
                 if(this.initialized) throw Error("102: already initialized!")
-                if(!this.username) throw Error("103: username not set!")
+                if(!blockchains) throw Error("103: blockchains required!")
                 this.initialized = true
                 this.status = 'init'
                 log.debug(tag,"blockchains: ",blockchains)
@@ -418,13 +419,6 @@ export class SDK {
                         },
                     }
                 });
-
-                //for each blockchain validate if unchained supported
-
-                //unchained
-                this.chainAdapterManager = new ChainAdapterManager(this.unchainedUrls)
-
-                //todo sub to unchained txs?
 
                 //TODO when to use cache?
                 // //read pubkeys from db
@@ -478,41 +472,44 @@ export class SDK {
                 //get global info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.debug(tag,"userInfo: ",userInfo)
+                log.info(tag,"userInfo: ",userInfo)
 
                 //if success false register username
                 if(!userInfo.success){
                     //no wallets paired
-                    log.debug(tag,"user not registered!")
+                    // log.debug(tag,"user not registered!")
+                    //
+                    // let userInfo = {
+                    //     queryKey:this.queryKey,
+                    //     username:this.username
+                    // }
+                    // let registerUserResp = await this.pioneerApi.RegisterUser(null,userInfo)
+                    // log.debug(tag,"registerUserResp: ",registerUserResp)
+                } else if(userInfo.success) {
+                    log.info(tag,"userInfo: ",userInfo.success)
+                    this.isPaired = true
 
-                    let userInfo = {
-                        queryKey:this.queryKey,
-                        username:this.username
-                    }
-                    let registerUserResp = await this.pioneerApi.RegisterUser(null,userInfo)
-                    log.debug(tag,"registerUserResp: ",registerUserResp)
+                    //TODO sync balances
+                    // if(userInfo.balances > 0){
+                    //     this.balances = userInfo.balances
+                    // }
+
+                    if(userInfo.pubkeys)this.pubkeys = userInfo.pubkeys
+                    //if(userInfo.wallets)this.wallets = userInfo.wallets
+
+                    // this.pubkeys = userInfo.pubkeys
+                    this.ibcChannels = userInfo.ibcChannels
+                    this.nfts = userInfo.nfts
+                    this.paymentStreams = userInfo.paymentStreams
+                    this.totalValueUsd = parseFloat(userInfo.totalValueUsd)
+                    this.context = userInfo.context
+                    this.invocationContext = userInfo.invocationContext
+                    this.assetContext = userInfo.assetContext
+                    this.assetBalanceNativeContext = userInfo.assetBalanceNativeContext
+                    this.assetBalanceUsdValueContext = userInfo.assetBalanceUsdValueContext
                 }
-                this.isPaired = true
-                this.status = 'paired'
+                this.status = 'init'
 
-                //TODO sync balances
-                // if(userInfo.balances > 0){
-                //     this.balances = userInfo.balances
-                // }
-
-                if(userInfo.pubkeys)this.pubkeys = userInfo.pubkeys
-                //if(userInfo.wallets)this.wallets = userInfo.wallets
-
-                // this.pubkeys = userInfo.pubkeys
-                this.ibcChannels = userInfo.ibcChannels
-                this.nfts = userInfo.nfts
-                this.paymentStreams = userInfo.paymentStreams
-                this.totalValueUsd = parseFloat(userInfo.totalValueUsd)
-                this.context = userInfo.context
-                this.invocationContext = userInfo.invocationContext
-                this.assetContext = userInfo.assetContext
-                this.assetBalanceNativeContext = userInfo.assetBalanceNativeContext
-                this.assetBalanceUsdValueContext = userInfo.assetBalanceUsdValueContext
 
                 return this.pioneerApi
             }catch(e){
@@ -589,11 +586,36 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-        this.checkBridge = function () {
+        this.checkBridge = async function () {
             let tag = TAG + " | checkBridge | "
             try {
-                //bridge port
+                //bridge status
+                log.info(tag,"bridge: check")
+                let bridgeStatus = await axios.get(this.bridge+"/status")
+                return bridgeStatus.data
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
+        this.getBridgeUser = async function () {
+            let tag = TAG + " | getBridgeUser | "
+            try {
+                //bridge status
+                log.info(tag,"bridge: check")
+                let bridgeStatus = await axios.get(this.bridge+"/user")
+                return bridgeStatus.data
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
+        this.getCodeInfo = async function (code:string) {
+            let tag = TAG + " | getCodeInfo | "
+            try {
+                //get code
+                let respPair = await this.pioneerApi.Pair({code})
+                log.info(tag,"respPair: ",respPair.data)
 
+                return respPair.data
             } catch (e) {
                 log.error(tag, "e: ", e)
             }
@@ -621,6 +643,11 @@ export class SDK {
 
                 let respPair = await axios({method:'GET',url: this.bridge+'/pair/'+code.code})
                 log.info(tag,"respPair: ",respPair.data)
+
+                if(respPair.username){
+                    this.username = respPair.username
+                    await this.getUserInfo()
+                }
 
                 return respPair.data
             } catch (e) {
@@ -653,14 +680,14 @@ export class SDK {
               TODO kepler
 
          */
-        this.pairWallet = async function (wallet:any) {
+        this.pairWallet = async function (walletType:string, wallet:any) {
             let tag = TAG + " | pairWallet | "
             try {
                 //TODO error if server is offline
                 let register
                 if(!this.username) throw Error("username not set!")
                 if(!this.pioneerApi) throw Error("pioneerApi not set!")
-                if(wallet.format === 'onboard'){
+                if(walletType === 'onboard'){
                     if(wallet.network !== 1){
                         throw Error('Network not supported!')
                     }
@@ -701,34 +728,33 @@ export class SDK {
                         auth:'lol',
                         provider:'lol'
                     }
-                } else if (wallet.type === 'keepkey'){
-                    log.debug(tag,"wallet: ",wallet)
-                    if(!wallet.pubkeys) throw Error('invalid citadel wallet!')
-                    if(!wallet.serialized.WALLET_ID) throw Error('invalid serialized wallet!')
-                    this.context = wallet.serialized.WALLET_ID
-
-                    log.debug(tag,"wallet: ",wallet)
+                } else if (walletType === 'keepkey'){
 
                     //set SDK to HDwallet
-                    this.HDWallet = wallet.wallet
+                    this.HDWallet = wallet
+
+                    //get pubkeys
+                    let pubkeysResult = await this.getPubkeys()
+                    log.info(tag,"pubkeysResult: ",pubkeysResult)
+                    this.context = pubkeysResult.context
 
                     //register
                     register = {
                         username:this.username,
                         blockchains:this.blockchains,
-                        context:wallet.serialized.WALLET_ID,
+                        context:pubkeysResult.context,
                         walletDescription:{
-                            context:wallet.serialized.WALLET_ID,
+                            context:pubkeysResult.context,
                             type:'keepkey'
                         },
                         data:{
-                            pubkeys:wallet.pubkeys
+                            pubkeys:pubkeysResult.pubkeys
                         },
                         queryKey:this.queryKey,
                         auth:'lol',
                         provider:'lol'
                     }
-                } else if(wallet.type === 'native'){
+                } else if(walletType === 'native'){
                     log.debug(tag,"wallet: ",wallet)
                     log.debug(tag,"wallet: ",wallet)
 
@@ -772,13 +798,12 @@ export class SDK {
                         provider:'lol'
                     }
                 }else{
-                    throw Error("102: Unhandled format! "+wallet.format)
+                    throw Error("102: Unhandled format! "+walletType)
                 }
 
                 //for each blockchain/load chainadapter
                 for(let i = 0; i < this.blockchains.length;i++){
                     let blockchain = this.blockchains[i]
-
                 }
 
 
@@ -867,44 +892,7 @@ export class SDK {
                 let output = ""
 
                 //filter by address
-                // let pubkey = this.pubkeys.filter((e:any) => e.symbol === asset)[0]
-                //TODO prefure context
-
-                switch(asset) {
-                    case "BTC":
-                        //TODO get next index
-
-                        const btcChainAdapter = this.chainAdapterManager.byChain('bitcoin')
-                        const btcBip32Params: BIP44Params = {
-                            purpose: 84,
-                            coinType: 0,
-                            accountNumber: 0,
-                            isChange: false,
-                            index: 0
-                        }
-
-                        const btcAddress = await btcChainAdapter.getAddress({
-                            wallet:this.HDWallet,
-                            bip32Params: btcBip32Params,
-                            accountType: UtxoAccountType.SegwitNative
-                        })
-                        output = btcAddress
-                        break;
-                    case "ETH":
-                        // eth
-                        const ethChainAdapter = this.chainAdapterManager.byChain('ethereum')
-                        const ethBip32Params: BIP44Params = { purpose: 44, coinType: 60, accountNumber: 0 }
-                        const ethAddress = await ethChainAdapter.getAddress({ wallet:this.HDWallet, bip32Params: ethBip32Params })
-                        output = ethAddress
-                        break;
-                    case "OSMO":
-                        throw Error('NOT SUPPORTED!  network '+asset)
-                        // osmo
-                        break;
-                    default:
-                        throw Error('NOT SUPPORTED!  network'+asset)
-                    // code block
-                }
+                let pubkey = this.pubkeys.filter((e:any) => e.symbol === asset)[0]
 
                 // if(showOnDevice){
                 //     //switch by asset
@@ -918,7 +906,7 @@ export class SDK {
                 //     log.info(tag,"result: ",result)
                 // }
 
-                return output
+                return pubkey.address
             } catch (e) {
                 log.error(tag, "e: ", e)
                 throw Error(e)
@@ -1142,52 +1130,56 @@ export class SDK {
             let tag = TAG + " | buildTx | "
             try {
                 let output:any = {}
+                log.info(tag,"tx: ",tx)
+                //use construction api
+
+
                 //use chain adapter
-                switch(tx.network) {
-                    case "BTC":
-                        //TODO get recommended fee
-
-                        const btcBip32Params: BIP44Params = {
-                            purpose: 84,
-                            coinType: 0,
-                            accountNumber: 0,
-                            isChange: false,
-                            index: 10
-                        }
-
-                        const txInput = {
-                            to: tx.recipient,
-                            value: tx.amount,
-                            wallet:this.HDWallet,
-                            bip32Params: btcBip32Params,
-                            chainSpecific: { accountType: UtxoAccountType.P2pkh, satoshiPerByte: '4' }
-                        }
-
-                        const btcChainAdapter = this.chainAdapterManager.byChain('bitcoin')
-                        const btcUnsignedTx = await btcChainAdapter.buildSendTransaction(txInput)
-                        log.info(tag,"btcUnsignedTx: ",btcUnsignedTx)
-
-                        let output = {
-                            network:tx.network,
-                            asset:tx.network,
-                            transaction:tx,
-                            HDwalletPayload:btcUnsignedTx,
-                            verbal:"bitcoin transfer transaction"
-                        }
-
-                        output.HDwalletPayload = btcUnsignedTx
-                        break;
-                    case "ETH":
-                        // eth
-                        throw Error("Unsupported")
-                        break;
-                    case "OSMO":
-                        // osmo
-                        throw Error("Unsupported")
-                        break;
-                    default:
-                    // code block
-                }
+                // switch(tx.network) {
+                //     case "BTC":
+                //         //TODO get recommended fee
+                //
+                //         const btcBip32Params: BIP44Params = {
+                //             purpose: 84,
+                //             coinType: 0,
+                //             accountNumber: 0,
+                //             isChange: false,
+                //             index: 10
+                //         }
+                //
+                //         const txInput = {
+                //             to: tx.recipient,
+                //             value: tx.amount,
+                //             wallet:this.HDWallet,
+                //             bip32Params: btcBip32Params,
+                //             chainSpecific: { accountType: UtxoAccountType.P2pkh, satoshiPerByte: '4' }
+                //         }
+                //
+                //         const btcChainAdapter = this.chainAdapterManager.byChain('bitcoin')
+                //         const btcUnsignedTx = await btcChainAdapter.buildSendTransaction(txInput)
+                //         log.info(tag,"btcUnsignedTx: ",btcUnsignedTx)
+                //
+                //         let output = {
+                //             network:tx.network,
+                //             asset:tx.network,
+                //             transaction:tx,
+                //             HDwalletPayload:btcUnsignedTx,
+                //             verbal:"bitcoin transfer transaction"
+                //         }
+                //
+                //         output.HDwalletPayload = btcUnsignedTx
+                //         break;
+                //     case "ETH":
+                //         // eth
+                //         throw Error("Unsupported")
+                //         break;
+                //     case "OSMO":
+                //         // osmo
+                //         throw Error("Unsupported")
+                //         break;
+                //     default:
+                //     // code block
+                // }
 
                 // if(!tx.addressFrom) throw Error("invalid swap input!")
                 // if(!tx.type) throw Error("invalid tx input! type needed for classification")
