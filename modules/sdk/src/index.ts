@@ -1833,7 +1833,7 @@ export class SDK {
                 //get info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.debug(tag,"userInfo: ",userInfo)
+                log.info(tag,"userInfo: ",userInfo)
 
                 this.username = userInfo.username
                 this.context = userInfo.context

@@ -33,21 +33,21 @@ let {
 //lib
 import { ChainTypes } from '@shapeshiftoss/types'
 
-let BLOCKCHAIN = 'ethereum'
-let ASSET = 'ETH'
-let MIN_BALANCE = process.env['MIN_BALANCE_ETH'] || "0.04"
+let BLOCKCHAIN = 'bitcoincash'
+let ASSET = 'BCH'
+let MIN_BALANCE = process.env['MIN_BALANCE_BCH'] || "0.004"
 let TEST_AMOUNT = process.env['TEST_AMOUNT'] || "0.0001"
 let spec = process.env['URL_PIONEER_SPEC'] || 'https://pioneers.dev/spec/swagger.json'
 let wss = process.env['URL_PIONEER_SOCKET'] || 'wss://pioneers.dev'
 let NO_BROADCAST = process.env['E2E_BROADCAST'] || true
-let FAUCET_OSMO_ADDRESS = process.env['FAUCET_OSMO_ADDRESS']
-if(!FAUCET_OSMO_ADDRESS) throw Error("Need Faucet Address!")
+let FAUCET_BCH_ADDRESS = process.env['FAUCET_BCH_ADDRESS']
+if(!FAUCET_BCH_ADDRESS) throw Error("Need Faucet Address!")
 
 let noBroadcast = true
 
-let TRADE_PAIR  = "ETH_BCH"
+let TRADE_PAIR  = "BCH_ETH"
 let INPUT_ASSET = ASSET
-let OUTPUT_ASSET = "BCH"
+let OUTPUT_ASSET = "ETH"
 
 console.log("spec: ",spec)
 console.log("wss: ",wss)
@@ -67,22 +67,10 @@ const test_service = async function () {
 
         const queryKey = "sdk:pair-keepkey:"+uuidv4();
         assert(queryKey)
-        const unchainedUrls = {
-            [ChainTypes.Bitcoin]: {
-                httpUrl: 'https://dev-api.bitcoin.shapeshift.com',
-                wsUrl: 'wss://dev-api.bitcoin.shapeshift.com'
-            },
-            [ChainTypes.Ethereum]: {
-                httpUrl: 'https://dev-api.ethereum.shapeshift.com',
-                wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
-            }
-        }
-        assert(unchainedUrls)
         let config:any = {
             queryKey,
             spec,
-            wss,
-            unchainedUrls
+            wss
         }
         let app = new SDK.SDK(spec,config)
         let status = await app.checkBridge()
