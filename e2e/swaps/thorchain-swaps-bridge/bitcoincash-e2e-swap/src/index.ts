@@ -76,11 +76,11 @@ const test_service = async function () {
         let status = await app.checkBridge()
         assert(status)
         assert(status.username)
-        log.info("status: ",status)
+        log.debug("status: ",status)
 
         //get bridge userInfo
         let userInfoBridge = await app.getBridgeUser()
-        log.info("userInfoBridge: ",userInfoBridge)
+        log.debug("userInfoBridge: ",userInfoBridge)
         let API = await app.init(blockchains)
         let events = await app.startSocket()
         assert(API)
@@ -90,7 +90,7 @@ const test_service = async function () {
         let pairResp = await app.pairBridge()
         assert(pairResp)
         assert(pairResp.success)
-        log.info("pairResp: ",pairResp)
+        log.debug("pairResp: ",pairResp)
         let userInfo = await app.getUserInfo()
         log.debug("userInfo: ",userInfo)
         assert(pairResp)
@@ -105,10 +105,10 @@ const test_service = async function () {
         assert(app.pubkeys)
         assert(app.balances)
         assert(app.wallets)
-        log.info("app wallets: ",app.wallets.length)
-        log.info("app pubkeys: ",app.pubkeys.length)
-        log.info("app balances: ",app.balances.length)
-        log.info("app context: ",app.context)
+        log.debug("app wallets: ",app.wallets.length)
+        log.debug("app pubkeys: ",app.pubkeys.length)
+        log.debug("app balances: ",app.balances.length)
+        log.debug("app context: ",app.context)
         //TODO enfore sanity rules
         //rules 1 pubkey per blockchain min
         //rules 1 balance per pubkey min? I think we show 0 balance? right
@@ -132,21 +132,21 @@ const test_service = async function () {
         let pubkeysOut = app.pubkeys.filter((e:any) => e.symbol === OUTPUT_ASSET)
         assert(pubkeysOut.length > 0)
         //assert pubkey on context
-        log.info(tag,"pubkeysOut: ",pubkeysOut.length)
-        log.info(tag,"app.context: ",app.context)
-        log.info(tag,"pubkeysOut[0]: ",pubkeysOut[0].context)
+        log.debug(tag,"pubkeysOut: ",pubkeysOut.length)
+        log.debug(tag,"app.context: ",app.context)
+        log.debug(tag,"pubkeysOut[0]: ",pubkeysOut[0].context)
         //note this assumes only 1 pubkey on 0
         //TODO if multi get @preferences
         let pubkeyOut = pubkeysOut.filter((e:any) => e.context === app.context)[0]
-        log.info(tag,"pubkeyOut: ",pubkeyOut)
+        log.debug(tag,"pubkeyOut: ",pubkeyOut)
         assert(pubkeyOut)
         assert(pubkeyOut.master)
         log.test("address Receive Swap: ",pubkeyOut.master)
 
         //balance of input
-        log.info(tag,"app.balances: ",app.balances)
+        log.debug(tag,"app.balances: ",app.balances)
         let balances = app.balances.filter((e:any) => e.symbol === ASSET)
-        log.info(tag,"balances: ",balances)
+        log.debug(tag,"balances: ",balances)
         assert(balances.length > 0)
         let balanceContext = balances.filter((e:any) => e.context === app.context)[0]
         assert(balanceContext)
@@ -162,7 +162,7 @@ const test_service = async function () {
 
         //get midgard info
         assert(app.markets)
-        log.info(tag,"app.markets: ",app.markets)
+        log.debug(tag,"app.markets: ",app.markets)
 
         //TODO
         //get market for pair on thorchain

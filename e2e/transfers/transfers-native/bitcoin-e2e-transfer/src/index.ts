@@ -76,7 +76,7 @@ const test_service = async function () {
             // }
         }
         assert(unchainedUrls)
-        log.info(tag,"unchainedUrls: ",unchainedUrls)
+        log.debug(tag,"unchainedUrls: ",unchainedUrls)
 
         let config = {
             queryKey,
@@ -103,10 +103,10 @@ const test_service = async function () {
             isWatch:false,
             mnemonic:process.env['WALLET_MAIN']
         }
-        log.info(tag,"pairWalletKeepKey: ",pairWalletNative)
+        log.debug(tag,"pairWalletKeepKey: ",pairWalletNative)
         let registerResult = await app.pairWallet(pairWalletNative)
         assert(registerResult)
-        log.info(tag,"registerResult: ",registerResult)
+        log.debug(tag,"registerResult: ",registerResult)
 
         //TODO verify sdk state
         let masterAddress = await app.getAddress(ASSET)
@@ -136,7 +136,7 @@ const test_service = async function () {
         // let responseTx = await app.buildTx(transfer)
         // assert(responseTx)
         // assert(responseTx.HDwalletPayload)
-        // log.info(tag,"responseTx: ",responseTx)
+        // log.debug(tag,"responseTx: ",responseTx)
         // console.timeEnd('start2build');
         //
         // //invoke unsigned
@@ -157,10 +157,10 @@ const test_service = async function () {
         // }
         //
         // //get invocation
-        // log.info(tag,"transaction: ",transaction)
+        // log.debug(tag,"transaction: ",transaction)
         // let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
         // assert(responseInvoke)
-        // log.info(tag,"responseInvoke: ",responseInvoke)
+        // log.debug(tag,"responseInvoke: ",responseInvoke)
         // let invocationId = responseInvoke.invocationId
         // assert(invocationId)
 
@@ -182,8 +182,8 @@ const test_service = async function () {
         //
         // //sign transaction
         // let signedTx:any = await app.signTx(invocationView1.invocation.unsignedTx)
-        // log.info(tag,"signedTx: ",signedTx)
-        // log.info(tag,"signedTx: ",signedTx.serialized)
+        // log.debug(tag,"signedTx: ",signedTx)
+        // log.debug(tag,"signedTx: ",signedTx.serialized)
         // assert(signedTx)
         // // assert(signedTx.txid)
         //
@@ -197,10 +197,10 @@ const test_service = async function () {
         // }
         //
         // //update invocation remote
-        // log.info(tag,"updateBody: ",JSON.stringify(updateBody))
+        // log.debug(tag,"updateBody: ",JSON.stringify(updateBody))
         // let resultUpdate = await app.updateInvocation(updateBody)
         // assert(resultUpdate)
-        // log.info(tag,"resultUpdate: ",resultUpdate)
+        // log.debug(tag,"resultUpdate: ",resultUpdate)
         //
         // //get invocation verify signed
         // let invocationView2 = await app.getInvocation(invocationId)

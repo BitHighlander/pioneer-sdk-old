@@ -1382,6 +1382,25 @@
     neo-regex "^1.0.7"
     ripple-regex "^1.1.8"
 
+"@pioneer-platform/pioneer-events@8.1.30":
+  version "8.1.30"
+  resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-events/-/pioneer-events-8.1.30.tgz#03230ba6e6186123149be2bd804a710976f75772"
+  integrity sha512-JWEWTYYPSel3ldUpIEthIPawu4HLVvkjFihDcs2FnF0ZbR3hE00zxgsBKQv85t282CmHG5mb32iKG5tgqDbznw==
+  dependencies:
+    "@pioneer-platform/loggerdog" "^8.1.17"
+    "@pioneer-platform/pioneer-types" "^8.1.44"
+    "@types/node" "^13.13.14"
+    axios "^0.19.2"
+    dotenv "^8.2.0"
+    fs-extra "^9.0.1"
+    openapi-client-axios "^3.6.1"
+    request "^2.88.2"
+    socket.io-client "^2.4.0"
+    ts-node "^8.10.2"
+    typescript "^3.9.7"
+    wait-promise "^0.4.1"
+    when "^3.7.8"
+
 "@pioneer-platform/pioneer-events@latest":
   version "8.1.29"
   resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-events/-/pioneer-events-8.1.29.tgz#ba796e1c5411462358e094c243f165c649eb3af5"

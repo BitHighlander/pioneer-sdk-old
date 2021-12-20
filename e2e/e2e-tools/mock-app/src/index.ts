@@ -141,7 +141,7 @@ export class APP {
                                 let output = {
                                     data: Buffer.from(resp).toString('hex')
                                 }
-                                log.info('output: ', output)
+                                log.debug('output: ', output)
                                 if (res.status) res.status(200).json(output)
                             } else if (req.method === 'POST') {
                                 let body = req.body
@@ -216,7 +216,7 @@ export class APP {
                     // @ts-ignore
                     appExpress.use((err, req, res) => {
                         const { status = 500, message = 'something went wrong. ', data = {} } = err
-                        //log.info(req.body, { status: status, message: message, data: data })
+                        //log.debug(req.body, { status: status, message: message, data: data })
                         try {
                             res.status(status).json({ message, data })
                         } catch (e) {}
@@ -225,14 +225,14 @@ export class APP {
                     //port
                     try {
                         server = appExpress.listen(API_PORT, () => {
-                            log.info(`server started at http://localhost:${API_PORT}`)
+                            log.debug(`server started at http://localhost:${API_PORT}`)
                             STATE = 3
                             STATUS = 'bridge online'
                         })
                     } catch (e) {
                         STATE = -1
                         STATUS = 'bridge error'
-                        log.info('e: ', e)
+                        log.debug('e: ', e)
                     }
                 } else {
                     log.error('Can not start! waiting for device connect')
@@ -249,10 +249,18 @@ export class APP {
                 //init sdk
                 log.debug(tag,"config: ",config)
                 let app = new SDK.SDK(config.spec,config)
-                await app.startSocket()
+                let events = await app.startSocket()
+                events.on('message', (event:any) => {
+                    log.info(tag,'message event! ',event);
+                });
+                events.on('invocations', (event:any) => {
+                    log.info(tag,'message invocations! ',event);
+                });
+
+
                 await app.init(this.blockchains)
 
-                log.info("CHECKPOINT BRIDGE 2")
+                log.debug("CHECKPOINT BRIDGE 2")
                 await wait.sleep(2000)
 
                 //connect to bridge
@@ -260,15 +268,15 @@ export class APP {
                 // @ts-ignore
                 let HDWallet = await bridgeAdapter.pairDevice('http://localhost:1646')
 
-                log.info("CHECKPOINT BRIDGE 3")
+                log.debug("CHECKPOINT BRIDGE 3")
                 await wait.sleep(2000)
 
                 //pair wallet
                 console.log('Checkpoint: pairWallet!')
                 let resultPair = await app.pairWallet('keepkey', HDWallet)
-                console.log('resultPair: ', resultPair)
+                //console.log('resultPair: ', resultPair)
 
-                log.info("CHECKPOINT BRIDGE 4")
+                log.debug("CHECKPOINT BRIDGE 4")
                 await wait.sleep(2000)
 
                 return resultPair

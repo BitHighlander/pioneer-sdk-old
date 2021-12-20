@@ -283,15 +283,15 @@ export class SDK {
             try {
                 if(!this.blockchains || this.blockchains.length === 0) throw Error("Blockchains required!")
                 let output:any = {}
-                log.info(tag,"blockchains: ",this.blockchains)
+                log.debug(tag,"blockchains: ",this.blockchains)
                 //let paths = this.paths(this.blockchains)
                 let paths = getPaths(this.blockchains)
-                log.info(tag,"getPaths: ",paths)
+                log.debug(tag,"getPaths: ",paths)
                 //verify paths
                 for(let i = 0; i < this.blockchains.length; i++){
                     let blockchain = this.blockchains[i]
                     let symbol = getNativeAssetForBlockchain(blockchain)
-                    log.info(tag,"symbol: ",symbol)
+                    log.debug(tag,"symbol: ",symbol)
                     //find in pubkeys
                     let isFound = paths.find((path: { blockchain: string; }) => {
                         return path.blockchain === blockchain
@@ -320,11 +320,11 @@ export class SDK {
                 //NOTE: keepkey returns an ordered array.
                 //To build verbose pubkey info we must rebuild based on order
                 // console.log("pathsKeepkey: ",pathsKeepkey)
-                // log.info(tag,"this.HDWallet: ",this.HDWallet)
-                // log.info(tag,"this.HDWallet: ",this.HDWallet.wallet)
-                log.info(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
+                // log.debug(tag,"this.HDWallet: ",this.HDWallet)
+                // log.debug(tag,"this.HDWallet: ",this.HDWallet.wallet)
+                log.debug(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
                 const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
-                log.info("***** pubkeys OUT: ",result)
+                log.debug("***** pubkeys OUT: ",result)
                 if(pathsKeepkey.length !== result.length) {
                     log.error(tag, {pathsKeepkey})
                     log.error(tag, {result})
@@ -376,7 +376,7 @@ export class SDK {
                 }
 
                 // let features = this.HDWallet.features;
-                // log.info(tag,"vender: ",features)
+                // log.debug(tag,"vender: ",features)
                 // log.debug(tag,"vender: ",features.deviceId)
 
                 //keep it short but unique. label + last 4 of id
@@ -392,7 +392,7 @@ export class SDK {
                     "WALLET_PUBLIC":keyedWallet,
                     "PATHS":paths
                 }
-                log.info(tag,"writePathPub: ",watchWallet)
+                log.debug(tag,"writePathPub: ",watchWallet)
                 output.context = context
                 output.wallet = watchWallet
                 return output
@@ -472,7 +472,7 @@ export class SDK {
                 //get global info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.info(tag,"userInfo: ",userInfo)
+                log.debug(tag,"userInfo: ",userInfo)
 
                 //if success false register username
                 if(!userInfo.success){
@@ -486,7 +486,7 @@ export class SDK {
                     // let registerUserResp = await this.pioneerApi.RegisterUser(null,userInfo)
                     // log.debug(tag,"registerUserResp: ",registerUserResp)
                 } else if(userInfo.success) {
-                    log.info(tag,"userInfo: ",userInfo.success)
+                    log.debug(tag,"userInfo: ",userInfo.success)
                     this.isPaired = true
 
                     //TODO sync balances
@@ -535,40 +535,40 @@ export class SDK {
                 }
 
                 this.events.events.on('message', (event:any) => {
-                    log.info(tag,'message event! ',event);
+                    log.debug(tag,'message event! ',event);
                     this.isPaired = true
                     this.username = event.username
                     this.updateContext()
                     this.events.pair(this.username)
 
-                    log.info(tag,"EVENT type: ",event.type)
+                    log.debug(tag,"EVENT type: ",event.type)
 
                 });
 
                 this.events.events.on('pairings', (event:any) => {
-                    log.info(tag,'message event! ',event);
+                    log.debug(tag,'message event! ',event);
                     this.isPaired = true
                     this.username = event.username
                     this.updateContext()
                     this.events.pair(this.username)
 
-                    log.info(tag,"EVENT type: ",event.type)
+                    log.debug(tag,"EVENT type: ",event.type)
 
                 });
 
                 this.events.events.on('context', (event:any) => {
-                    log.info(tag,'context set to '+event.context);
+                    log.debug(tag,'context set to '+event.context);
                     this.context = event.context
                     this.updateContext()
                 });
 
                 this.events.events.on('pubkey', (event:any) => {
-                    log.info(tag,"pubkey event!", event)
+                    log.debug(tag,"pubkey event!", event)
                     //update pubkeys
                 });
 
                 this.events.events.on('balances', (event:any) => {
-                    log.info(tag,"balances event!", event)
+                    log.debug(tag,"balances event!", event)
                 });
 
                 //onSign
@@ -577,17 +577,18 @@ export class SDK {
                     if(this.HDWallet){
                         //TODO ask user for approval
                         //(only renderer will have HDWallet)
-
+                        if(!event.invocationId) throw Error("invalid invocation!")
+                        let invocationInfo = await this.getInvocation(event.invocationId)
+                        log.info(tag,"invocationInfo: ",invocationInfo)
+                        if(!invocationInfo?.invocation.unsignedTx.HDwalletPayload) throw Error("invalid invocation!")
                         //sign & broadcast
-                        let unsignedTx = event.unsignedTx
-                        log.info(tag,"unsignedTx: ",unsignedTx)
-                        let signedTx = await this.signTx(unsignedTx)
+                        let signedTx = await this.signTx(invocationInfo.invocation.unsignedTx)
                         log.info(tag,"signedTx: ",signedTx)
-                        let broadcastResult = await this.broadcastTransaction(event.network,signedTx)
-                        log.info(tag,"broadcastResult: ",broadcastResult)
+                        // let broadcastResult = await this.broadcastTransaction(event.network,signedTx)
+                        // log.info(tag,"broadcastResult: ",broadcastResult)
                         //TODO broadcast?
                     } else {
-                        log.info(tag,"Not Signing, no HDWallet found in process")
+                        log.notice(tag,"Not Signing, no HDWallet found in process")
                     }
                 });
 
@@ -600,7 +601,7 @@ export class SDK {
             let tag = TAG + " | checkBridge | "
             try {
                 //bridge status
-                log.info(tag,"bridge: check")
+                log.debug(tag,"bridge: check")
                 let bridgeStatus = await axios.get(this.bridge+"/status")
                 return bridgeStatus.data
             } catch (e) {
@@ -611,7 +612,7 @@ export class SDK {
             let tag = TAG + " | getBridgeUser | "
             try {
                 //bridge status
-                log.info(tag,"bridge: check")
+                log.debug(tag,"bridge: check")
                 let bridgeStatus = await axios.get(this.bridge+"/user")
                 return bridgeStatus.data
             } catch (e) {
@@ -623,7 +624,7 @@ export class SDK {
             try {
                 //get code
                 let respPair = await this.pioneerApi.Pair({code})
-                log.info(tag,"respPair: ",respPair.data)
+                log.debug(tag,"respPair: ",respPair.data)
 
                 return respPair.data
             } catch (e) {
@@ -635,7 +636,7 @@ export class SDK {
             try {
                 //get code
                 let respPair = await this.pioneerApi.Pair({code})
-                log.info(tag,"respPair: ",respPair.data)
+                log.debug(tag,"respPair: ",respPair.data)
 
                 return respPair.data
             } catch (e) {
@@ -648,11 +649,11 @@ export class SDK {
                 //bridge port
                 //get code
                 let code = await this.createPairingCode()
-                log.info(tag,"code: ",code)
+                log.debug(tag,"code: ",code)
                 //send code to bridge
 
                 let respPair = await axios({method:'GET',url: this.bridge+'/pair/'+code.code})
-                log.info(tag,"respPair: ",respPair.data)
+                log.debug(tag,"respPair: ",respPair.data)
 
                 if(respPair.username){
                     this.username = respPair.username
@@ -745,7 +746,7 @@ export class SDK {
 
                     //get pubkeys
                     let pubkeysResult = await this.getPubkeys()
-                    log.info(tag,"pubkeysResult: ",pubkeysResult)
+                    log.debug(tag,"pubkeysResult: ",pubkeysResult)
                     this.context = pubkeysResult.context
 
                     //register
@@ -777,9 +778,9 @@ export class SDK {
                     //set SDK to HDwallet
                     this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
                     let resultInit = await this.HDWallet.initialize()
-                    log.info(tag,"resultInit: ",resultInit)
+                    log.debug(tag,"resultInit: ",resultInit)
                     let isInitialized = this.HDWallet.isInitialized()
-                    log.info(tag,"isInitialized: ",isInitialized)
+                    log.debug(tag,"isInitialized: ",isInitialized)
                     if(!isInitialized) throw Error("failed to initialize")
 
                     //get pubkeys
@@ -789,7 +790,7 @@ export class SDK {
                     let pubkeys = pubkeysResp.pubkeys
 
                     this.context = walletWatch.WALLET_ID
-                    log.info(tag,"new context: ",this.context)
+                    log.debug(tag,"new context: ",this.context)
 
                     //register
                     register = {
@@ -907,13 +908,13 @@ export class SDK {
                 // if(showOnDevice){
                 //     //switch by asset
                 //     let accountInfo = this.HDWallet.hdwallet.osmosisGetAccountPaths({ accountIdx: 0 })
-                //     log.info(tag,"accountInfo: ",accountInfo)
+                //     log.debug(tag,"accountInfo: ",accountInfo)
                 //     let addressNList = accountInfo.addressNList
                 //     let result = await this.HDWallet.hdwallet.osmosisGetAddress({
                 //         addressNList,
                 //         showDisplay: true,
                 //     });
-                //     log.info(tag,"result: ",result)
+                //     log.debug(tag,"result: ",result)
                 // }
 
                 return pubkey.address
@@ -1129,7 +1130,7 @@ export class SDK {
             let tag = TAG + " | buildTx | "
             try {
                 if(!tx.addressFrom) throw Error("invalid tx addressFrom required!")
-                log.info(tag,"tx: ",tx)
+                log.debug(tag,"tx: ",tx)
 
                 //TODO use construction api
 
@@ -1150,7 +1151,7 @@ export class SDK {
                 if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
 
                 let context
-                //TODO fix this crap, normaize unsginedTx object
+                //TODO fix this crap, normalize unsginedTx object
                 if(!unsignedTx.context && unsignedTx?.swap?.context){
                     context = unsignedTx.swap.context
                 } else if(!unsignedTx.context && unsignedTx?.transaction.context){
@@ -1158,7 +1159,7 @@ export class SDK {
                 }else if(unsignedTx.context){
                     context = unsignedTx.context
                 }
-                log.info(tag,"context: ",context)
+                log.debug(tag,"context: ",context)
                 if(!context) throw Error('Invalid payload! missing: context')
                 log.debug(tag,"this.wallets: ",this.wallets)
 
@@ -1171,12 +1172,12 @@ export class SDK {
                 switch(unsignedTx.network) {
                     case 'ATOM':
                         signedTx = await this.HDWallet.hdwallet.cosmosSignTx(unsignedTx.HDwalletPayload)
-                        log.info(tag,"signedTx: ",signedTx)
+                        log.debug(tag,"signedTx: ",signedTx)
                         break;
                     case 'OSMO':
-                        log.info(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
+                        log.debug(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
                         signedTx = await this.HDWallet.osmosisSignTx(unsignedTx.HDwalletPayload)
-                        log.info(tag,"signedTx: ",signedTx)
+                        log.debug(tag,"signedTx: ",signedTx)
 
                         let broadcastString = {
                             tx:signedTx,
@@ -1190,8 +1191,8 @@ export class SDK {
                         signedTx.serialized = JSON.stringify(broadcastString)
                         break;
                     case 'ETH':
-                        signedTx = await this.HDWallet.hdwallet.ethSignTx(unsignedTx.HDwalletPayload)
-                        log.debug(tag,"signedTx: ",signedTx)
+                        signedTx = await this.HDWallet.ethSignTx(unsignedTx.HDwalletPayload)
+                        log.info(tag,"signedTx: ",signedTx)
 
                         //TODO do txid hashing in HDwallet
                         const txid = keccak256(signedTx.serialized).toString('hex')
@@ -1784,7 +1785,7 @@ export class SDK {
                 //get info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.info(tag,"userInfo: ",userInfo)
+                log.debug(tag,"userInfo: ",userInfo)
 
                 this.username = userInfo.username
                 this.context = userInfo.context

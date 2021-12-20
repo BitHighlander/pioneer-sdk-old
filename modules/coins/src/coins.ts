@@ -843,7 +843,7 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
     let tag = TAG + " | get_address_from_xpub | "
     try {
         let output
-        log.info(tag,"Input: ",{xpub,scriptType,coin,account,index,isChange,isTestnet})
+        log.debug(tag,"Input: ",{xpub,scriptType,coin,account,index,isChange,isTestnet})
         //if xpub get next unused
         if(!xpub) throw Error("xpub required! coin:"+coin)
         console.log("CHECKPOINT")
