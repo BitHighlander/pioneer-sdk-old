@@ -38,7 +38,7 @@ let run_test = async function(){
         await app.init(config.blockchains)
 
         await app.runBridge()
-
+        console.log("(bridge) system ready....")
     }catch(e){
         console.error(e)
     }

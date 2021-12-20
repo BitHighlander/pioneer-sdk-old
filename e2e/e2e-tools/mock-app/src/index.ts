@@ -166,7 +166,7 @@ export class APP {
                                 let host = req.headers.host
                                 //TODO hold till approval
                                 let respPair = await PIONEER_API.instance.Pair(null, { code })
-                                log.info('respPair: ', respPair)
+                                log.debug('respPair: ', respPair.data)
                                 if (res.status)
                                     res.status(200).json({
                                         success: true,
@@ -247,7 +247,7 @@ export class APP {
             try {
                 if(!this.blockchains) throw Error("Failed to init, no blockchains")
                 //init sdk
-                log.info(tag,"config: ",config)
+                log.debug(tag,"config: ",config)
                 let app = new SDK.SDK(config.spec,config)
                 await app.startSocket()
                 await app.init(this.blockchains)

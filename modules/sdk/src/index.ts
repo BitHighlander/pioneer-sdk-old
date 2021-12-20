@@ -40,7 +40,7 @@ const axios = Axios.create({
 
 // import { ethers, BigNumberish } from 'ethers'
 // import BigNumber from 'bignumber.js'
-
+const TxBuilder = require("@pioneer-platform/pioneer-tx-builder");
 /*
     ShapeShiftOss
  */
@@ -439,14 +439,14 @@ export class SDK {
                 if(this.blockchains.length === 0) throw Error("Failed to init! must have blockchains!")
                 this.pioneerApi = await this.pioneerApi.init()
                 if(!this.pioneerApi) throw Error("Failed to init!")
-                // let config = {
-                //     queryKey:this.queryKey,
-                //     username:this.username,
-                //     blockchains,
-                //     spec
-                // }
-                // this.txBuilder = new TxBuilder('',config);
-                // await this.txBuilder.init()
+                let config = {
+                    queryKey:this.queryKey,
+                    username:this.username,
+                    blockchains,
+                    spec
+                }
+                this.txBuilder = new TxBuilder('',config);
+                await this.txBuilder.init()
 
                 let configInvoke = {
                     queryKey:this.queryKey,
@@ -534,51 +534,61 @@ export class SDK {
                     this.events.pair(this.username)
                 }
 
-                //all this not hitting? wtf?
-                // this.events.events.on('subscribedToUsername', (event:any) => {
-                //     log.debug(tag,'CHECKPOINT ***** ');
-                //     log.debug(tag,'paired to '+this.username);
-                //     this.isPaired = true
-                //     this.username = event.username
-                //     this.events.emit('subscribedToUsername',event)
-                //     Events.setUsername(this.username)
-                // });
-
                 this.events.events.on('message', (event:any) => {
-                    log.debug(tag,'CHECKPOINT2 ***** ');
-                    log.debug(tag,'app paired! ',event);
+                    log.info(tag,'message event! ',event);
                     this.isPaired = true
                     this.username = event.username
                     this.updateContext()
                     this.events.pair(this.username)
+
+                    log.info(tag,"EVENT type: ",event.type)
+
                 });
 
-                //TODO removeme?
-                // this.events.events.on('pairing', (event:any) => {
-                //     log.debug(tag,'CHECKPOINT2a ***** ');
-                //     log.debug(tag,'app paired! ',event);
-                //     this.isPaired = true
-                //     this.username = event.username
-                //     this.updateContext()
-                // });
+                this.events.events.on('pairings', (event:any) => {
+                    log.info(tag,'message event! ',event);
+                    this.isPaired = true
+                    this.username = event.username
+                    this.updateContext()
+                    this.events.pair(this.username)
+
+                    log.info(tag,"EVENT type: ",event.type)
+
+                });
 
                 this.events.events.on('context', (event:any) => {
-                    log.debug(tag,'context set to '+event.context);
+                    log.info(tag,'context set to '+event.context);
                     this.context = event.context
                     this.updateContext()
                 });
 
                 this.events.events.on('pubkey', (event:any) => {
-                    log.debug(tag,"pubkey event!", event)
+                    log.info(tag,"pubkey event!", event)
                     //update pubkeys
                 });
 
                 this.events.events.on('balances', (event:any) => {
-                    log.debug(tag,"balances event!", event)
+                    log.info(tag,"balances event!", event)
                 });
 
-                this.events.events.on('invocationUpdate', (event:any) => {
-                    log.debug(tag,"invocationUpdate event!", event)
+                //onSign
+                this.events.events.on('invocations', async (event:any) => {
+                    log.info("invocation: ",event)
+                    if(this.HDWallet){
+                        //TODO ask user for approval
+                        //(only renderer will have HDWallet)
+
+                        //sign & broadcast
+                        let unsignedTx = event.unsignedTx
+                        log.info(tag,"unsignedTx: ",unsignedTx)
+                        let signedTx = await this.signTx(unsignedTx)
+                        log.info(tag,"signedTx: ",signedTx)
+                        let broadcastResult = await this.broadcastTransaction(event.network,signedTx)
+                        log.info(tag,"broadcastResult: ",broadcastResult)
+                        //TODO broadcast?
+                    } else {
+                        log.info(tag,"Not Signing, no HDWallet found in process")
+                    }
                 });
 
                 return this.events.events
@@ -1113,78 +1123,19 @@ export class SDK {
         //         log.error(tag, "e: ", e)
         //     }
         // }
-        //SDK v2
-        this.buildSwapTx = async function (swap:any) {
-            let tag = TAG + " | buildSwapTx | "
-            try {
-                if(!swap.addressFrom) throw Error("invalid swap input!")
-                let swapTx = await this.txBuilder.buildSwap(swap)
-                return swapTx
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
 
         //SDK buildTx
         this.buildTx = async function (tx:any) {
             let tag = TAG + " | buildTx | "
             try {
-                let output:any = {}
+                if(!tx.addressFrom) throw Error("invalid tx addressFrom required!")
                 log.info(tag,"tx: ",tx)
-                //use construction api
 
+                //TODO use construction api
 
-                //use chain adapter
-                // switch(tx.network) {
-                //     case "BTC":
-                //         //TODO get recommended fee
-                //
-                //         const btcBip32Params: BIP44Params = {
-                //             purpose: 84,
-                //             coinType: 0,
-                //             accountNumber: 0,
-                //             isChange: false,
-                //             index: 10
-                //         }
-                //
-                //         const txInput = {
-                //             to: tx.recipient,
-                //             value: tx.amount,
-                //             wallet:this.HDWallet,
-                //             bip32Params: btcBip32Params,
-                //             chainSpecific: { accountType: UtxoAccountType.P2pkh, satoshiPerByte: '4' }
-                //         }
-                //
-                //         const btcChainAdapter = this.chainAdapterManager.byChain('bitcoin')
-                //         const btcUnsignedTx = await btcChainAdapter.buildSendTransaction(txInput)
-                //         log.info(tag,"btcUnsignedTx: ",btcUnsignedTx)
-                //
-                //         let output = {
-                //             network:tx.network,
-                //             asset:tx.network,
-                //             transaction:tx,
-                //             HDwalletPayload:btcUnsignedTx,
-                //             verbal:"bitcoin transfer transaction"
-                //         }
-                //
-                //         output.HDwalletPayload = btcUnsignedTx
-                //         break;
-                //     case "ETH":
-                //         // eth
-                //         throw Error("Unsupported")
-                //         break;
-                //     case "OSMO":
-                //         // osmo
-                //         throw Error("Unsupported")
-                //         break;
-                //     default:
-                //     // code block
-                // }
-
-                // if(!tx.addressFrom) throw Error("invalid swap input!")
-                // if(!tx.type) throw Error("invalid tx input! type needed for classification")
-                // let unsignedTx = await this.txBuilder.buildTx(tx)
-                // return unsignedTx
+                //use txBuilder
+                let unsginedTx = await this.txBuilder.buildTx(tx)
+                return unsginedTx
             } catch (e) {
                 log.error(tag, "e: ", e)
             }

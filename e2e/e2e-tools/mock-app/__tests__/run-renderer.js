@@ -38,6 +38,8 @@ let run_test = async function(){
         await app.init(config.blockchains)
 
         await app.runRenderer()
+
+        console.log("(renderer) system ready....")
     }catch(e){
         console.error(e)
     }
