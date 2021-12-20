@@ -120,7 +120,6 @@ export interface EventsConfig {
     tech debt
  */
 export interface Config {
-    walletId?:string
     context:string
     blockchains:any
     wss?:string,

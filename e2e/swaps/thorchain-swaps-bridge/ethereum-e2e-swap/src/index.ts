@@ -93,6 +93,14 @@ const test_service = async function () {
         //get bridge userInfo
         let userInfoBridge = await app.getBridgeUser()
         log.info("userInfoBridge: ",userInfoBridge)
+        //verify bridge userInfo has asset + balance
+        assert(userInfoBridge)
+        assert(userInfoBridge.pubkeys)
+        assert(userInfoBridge.balances)
+        let bridgeAssetBalance = userInfoBridge.balances.filter((e:any) => e.symbol === ASSET)[0]
+        assert(bridgeAssetBalance)
+        assert(bridgeAssetBalance.balance)
+
         let API = await app.init(blockchains)
         let events = await app.startSocket()
         assert(API)

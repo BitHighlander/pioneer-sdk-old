@@ -381,9 +381,9 @@ export class SDK {
 
                 //keep it short but unique. label + last 4 of id
                 let masterEth = await this.getAddress('ETH')
-                let walletId = masterEth+".wallet"
+                let context = masterEth+".wallet"
                 let watchWallet = {
-                    "WALLET_ID": walletId,
+                    "WALLET_ID": context,
                     "TYPE": "watch",
                     "CREATED": new Date().getTime(),
                     "VERSION": "0.1.3",
@@ -393,7 +393,7 @@ export class SDK {
                     "PATHS":paths
                 }
                 log.info(tag,"writePathPub: ",watchWallet)
-                output.context = walletId
+                output.context = context
                 output.wallet = watchWallet
                 return output
             } catch (e) {
