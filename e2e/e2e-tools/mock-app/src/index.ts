@@ -104,7 +104,6 @@ export class APP {
                 log.debug(tag,"device: ",device)
                 log.debug(tag,"CHECKPOINT 3")
 
-
                 //pair
                 let config = {
                     queryKey:this.queryKey,

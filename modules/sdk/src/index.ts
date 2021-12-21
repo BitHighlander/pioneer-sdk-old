@@ -696,8 +696,8 @@ export class SDK {
             try {
                 //TODO error if server is offline
                 let register
-                if(!this.username) throw Error("username not set!")
                 if(!this.pioneerApi) throw Error("pioneerApi not set!")
+                if(!this.username) throw Error("username not set!")
                 if(walletType === 'onboard'){
                     if(wallet.network !== 1){
                         throw Error('Network not supported!')
@@ -740,7 +740,8 @@ export class SDK {
                         provider:'lol'
                     }
                 } else if (walletType === 'keepkey'){
-
+                    let isInit = await wallet.isInitialized()
+                    if(!isInit) throw Error("Can not pair! not initialized!")
                     //set SDK to HDwallet
                     this.HDWallet = wallet
 
