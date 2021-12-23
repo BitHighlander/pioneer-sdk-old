@@ -250,10 +250,24 @@ export class APP {
                 let app = new SDK.SDK(config.spec,config)
                 let events = await app.startSocket()
                 events.on('message', (event:any) => {
-                    log.info(tag,'message event! ',event);
+                    //log.info(tag,'message event! ',event);
                 });
-                events.on('invocations', (event:any) => {
-                    log.info(tag,'message invocations! ',event);
+                events.on('invocations', async (event:any) => {
+                    log.info(tag,'** message invocations! ',event);
+                    //get invocation
+                    let invocationInfo = await app.getInvocation(event.invocationId)
+                    let unsignedTx = invocationInfo.unsignedTx
+                    log.info(tag,'unsignedTx: ',unsignedTx);
+                    log.info(tag,'unsignedTx: ',unsignedTx);
+
+                    log.info(tag,"broke: ",)
+
+                    let signedTx = await app.signTx(unsignedTx)
+                    log.info(tag,'signedTx: ',signedTx);
+
+                    //if not NoBroadcast
+                    // let broadcastResult = await pioneer.App.broadcast(unsignedTx.network, signedTx)
+                    // console.log('broadcastResult: ', broadcastResult)
                 });
 
 
@@ -263,12 +277,17 @@ export class APP {
                 await wait.sleep(2000)
 
                 //connect to bridge
-                let bridgeAdapter = keepkeyTcp.TCPKeepKeyAdapter.useKeyring(new core.Keyring())
+                let keyring = new core.Keyring()
+                let bridgeAdapter = keepkeyTcp.TCPKeepKeyAdapter.useKeyring(keyring)
                 // @ts-ignore
                 let HDWallet = await bridgeAdapter.pairDevice('http://localhost:1646')
 
                 log.debug("CHECKPOINT BRIDGE 3")
                 await wait.sleep(2000)
+
+                keyring.on(['KeepKey', '*', '*'],function(resp){
+                    console.log("event: ",resp)
+                })
 
                 //pair wallet
                 console.log('Checkpoint: pairWallet!')

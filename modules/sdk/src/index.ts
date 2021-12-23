@@ -357,7 +357,6 @@ export class SDK {
                         //add to secondary pubkeys
                         keyedWallet['available'].push(pubkey)
                     }
-
                 }
 
                 //verify pubkeys
@@ -574,22 +573,6 @@ export class SDK {
                 //onSign
                 this.events.events.on('invocations', async (event:any) => {
                     log.info("invocation: ",event)
-                    if(this.HDWallet){
-                        //TODO ask user for approval
-                        //(only renderer will have HDWallet)
-                        if(!event.invocationId) throw Error("invalid invocation!")
-                        let invocationInfo = await this.getInvocation(event.invocationId)
-                        log.info(tag,"invocationInfo: ",invocationInfo)
-                        if(!invocationInfo?.invocation.unsignedTx.HDwalletPayload) throw Error("invalid invocation!")
-                        //sign & broadcast
-                        let signedTx = await this.signTx(invocationInfo.invocation.unsignedTx)
-                        log.info(tag,"signedTx: ",signedTx)
-                        // let broadcastResult = await this.broadcastTransaction(event.network,signedTx)
-                        // log.info(tag,"broadcastResult: ",broadcastResult)
-                        //TODO broadcast?
-                    } else {
-                        log.notice(tag,"Not Signing, no HDWallet found in process")
-                    }
                 });
 
                 return this.events.events
@@ -743,7 +726,12 @@ export class SDK {
                     let isInit = await wallet.isInitialized()
                     if(!isInit) throw Error("Can not pair! not initialized!")
                     //set SDK to HDwallet
+                    // console.log("keyring: ",wallet.transport.keyring)
                     this.HDWallet = wallet
+
+                    // wallet.on('event', async function(event:any) {
+                    //     console.log("EVENT: ",event)
+                    // });
 
                     //get pubkeys
                     let pubkeysResult = await this.getPubkeys()
@@ -1149,6 +1137,7 @@ export class SDK {
             try {
                 if(!this.HDWallet) throw Error('Can not not sign if a HDWwallet is not paired!')
                 log.info(tag,"unsignedTx: ",unsignedTx)
+                if(!unsignedTx) throw Error('Invalid payload! empty')
                 if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
 
                 let context
