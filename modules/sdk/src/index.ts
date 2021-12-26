@@ -318,6 +318,7 @@ export class SDK {
                 }
 
                 log.notice("***** paths IN: ",pathsKeepkey.length)
+                log.notice("***** paths IN: ",pathsKeepkey)
                 //NOTE: keepkey returns an ordered array.
                 //To build verbose pubkey info we must rebuild based on order
                 // console.log("pathsKeepkey: ",pathsKeepkey)
@@ -1191,6 +1192,17 @@ export class SDK {
                     case 'ATOM':
                         signedTx = await this.HDWallet.cosmosSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
+                        broadcastString = {
+                            tx:signedTx,
+                            type:"cosmos-sdk/StdTx",
+                            mode:"sync"
+                        }
+                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+                        //TODO FIXME
+                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+
+                        signedTx.serialized = JSON.stringify(broadcastString)
+                        signedTx.txid = txid
                         break;
                     case 'OSMO':
                         log.debug(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)

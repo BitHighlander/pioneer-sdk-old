@@ -921,8 +921,10 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
                 break;
             case 'OSMO':
                 console.log("publicKey: ",publicKey.toString('hex'))
-                let pubkeyOsmo = bitcoin.bip32.fromBase58(xpub).publicKey
-                output = createBech32Address(pubkeyOsmo,'osmo')
+                output = createBech32Address(publicKey,'osmo')
+                //match legacy keplr (deprecated)
+                // let pubkeyOsmo = bitcoin.bip32.fromBase58(xpub).publicKey
+                // output = createBech32Address(pubkeyOsmo,'osmo')
                 break;
             case 'BNB':
                 log.debug("pubkey: ",publicKey)

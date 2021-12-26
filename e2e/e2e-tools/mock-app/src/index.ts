@@ -39,7 +39,7 @@ let PIONEER_API:any
 let STATE = 0
 let isQuitting = false
 let eventIPC = {}
-let ACCEPTED_INVOCATIONS = []
+let ACCEPTED_INVOCATIONS:any = []
 
 export class APP {
     private init: () => Promise<void>;
@@ -303,7 +303,7 @@ export class APP {
                 log.debug("CHECKPOINT BRIDGE 3")
                 await wait.sleep(2000)
 
-                keyring.on(['KeepKey', '*', '*'],function(resp){
+                keyring.on(['KeepKey', '*', '*'],function(resp:any){
                     console.log("event: ",resp)
                 })
 
