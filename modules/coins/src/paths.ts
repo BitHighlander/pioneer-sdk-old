@@ -76,7 +76,7 @@ export function getPaths(blockchains?:any,isTestnet?:boolean) {
         let entry:any = {
             note:" Default RUNE path ",
             type:"address",
-            addressNList: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0, 0, 0],
+            addressNList: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0],
             addressNListMaster: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0, 0, 0],
             curve: 'secp256k1',
             script_type:"thorchain",
@@ -95,7 +95,7 @@ export function getPaths(blockchains?:any,isTestnet?:boolean) {
         let entry:any = {
             note:" Default Secret path ",
             type:"address",
-            addressNList: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0, 0, 0],
+            addressNList: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0],
             addressNListMaster: [0x80000000 + 44, 0x80000000 + 931, 0x80000000 + 0, 0, 0],
             curve: 'secp256k1',
             script_type:"thorchain",
@@ -116,7 +116,7 @@ export function getPaths(blockchains?:any,isTestnet?:boolean) {
             type:"address",
             script_type:"bech32",
             available_scripts_types:['bech32'],
-            addressNList: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0, 0, 0],
+            addressNList: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0],
             addressNListMaster: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0, 0, 0],
             curve: 'secp256k1',
             showDisplay: true, // Not supported by TrezorConnect or Ledger, but KeepKey should do it
@@ -136,7 +136,7 @@ export function getPaths(blockchains?:any,isTestnet?:boolean) {
             type:"address",
             script_type:"bech32",
             available_scripts_types:['bech32'],
-            addressNList: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0, 0, 0],
+            addressNList: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0],
             addressNListMaster: [0x80000000 + 44, 0x80000000 + 118, 0x80000000 + 0, 0, 0],
             curve: 'secp256k1',
             showDisplay: true, // Not supported by TrezorConnect or Ledger, but KeepKey should do it
@@ -156,7 +156,7 @@ export function getPaths(blockchains?:any,isTestnet?:boolean) {
             type:"address",
             script_type:"binance",
             available_scripts_types:['binance'],
-            addressNList: [0x80000000 + 44, 0x80000000 + 714, 0x80000000 + 0, 0 , 0],
+            addressNList: [0x80000000 + 44, 0x80000000 + 714, 0x80000000 + 0],
             addressNListMaster: [0x80000000 + 44, 0x80000000 + 714, 0x80000000 + 0, 0, 0],
             curve: 'secp256k1',
             showDisplay: true, // Not supported by TrezorConnect or Ledger, but KeepKey should do it

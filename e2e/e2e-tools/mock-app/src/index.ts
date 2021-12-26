@@ -39,6 +39,7 @@ let PIONEER_API:any
 let STATE = 0
 let isQuitting = false
 let eventIPC = {}
+let ACCEPTED_INVOCATIONS = []
 
 export class APP {
     private init: () => Promise<void>;
@@ -255,19 +256,36 @@ export class APP {
                 events.on('invocations', async (event:any) => {
                     log.info(tag,'** message invocations! ',event);
                     //get invocation
-                    let invocationInfo = await app.getInvocation(event.invocationId)
-                    let unsignedTx = invocationInfo.unsignedTx
-                    log.info(tag,'unsignedTx: ',unsignedTx);
-                    log.info(tag,'unsignedTx: ',unsignedTx);
+                    if(event.type == 'signRequest' && event.invocationId){
+                        let invocationInfo = await app.getInvocation(event.invocationId)
+                        let unsignedTx = invocationInfo.unsignedTx
+                        log.info(tag,'unsignedTx: ',unsignedTx);
 
-                    log.info(tag,"broke: ",)
+                        //
+                        if(ACCEPTED_INVOCATIONS.indexOf(event.invocationId) === -1){
+                            ACCEPTED_INVOCATIONS.push(event.invocationId)
+                            let signedTx = await app.signTx(unsignedTx)
+                            log.info(tag,'signedTx: ',signedTx);
 
-                    let signedTx = await app.signTx(unsignedTx)
-                    log.info(tag,'signedTx: ',signedTx);
+                            //
+                            let updateBody = {
+                                network:event.network,
+                                invocationId:event.invocationId,
+                                invocation:invocationInfo,
+                                unsignedTx,
+                                signedTx
+                            }
+                            //update invocation remote
+                            let resultUpdate = await app.updateInvocation(updateBody)
+                            log.info(tag,"resultUpdate: ",resultUpdate)
 
-                    //if not NoBroadcast
-                    // let broadcastResult = await pioneer.App.broadcast(unsignedTx.network, signedTx)
-                    // console.log('broadcastResult: ', broadcastResult)
+                            let broadcastResult = await app.broadcastTransaction(updateBody)
+                            log.info('broadcastResult: ', broadcastResult)
+
+                        } else {
+                            log.error("Already accepted invocation!")
+                        }
+                    }
                 });
 
 

@@ -12,6 +12,7 @@ const log = require("@pioneer-platform/loggerdog")()
 const Pioneer = require('openapi-client-axios').default;
 const Events = require("@pioneer-platform/pioneer-events")
 const Datastore = require('nedb-promises')
+const cryptoTools = require('crypto');
 const keccak256 = require('keccak256')
 let {
     getPaths,
@@ -573,6 +574,14 @@ export class SDK {
                 //onSign
                 this.events.events.on('invocations', async (event:any) => {
                     log.info("invocation: ",event)
+                    switch(event.type) {
+                        case 'update':
+                            break;
+                        case 'signRequest':
+                            break;
+                        default:
+                            log.info(tag,"unhandled: ",event.type)
+                    }
                 });
 
                 return this.events.events
@@ -1159,9 +1168,28 @@ export class SDK {
                 //TODO validate recepiant from pioneer api
 
                 let signedTx
+                let broadcastString
+                let buffer
+                let txid
                 switch(unsignedTx.network) {
+                    case 'RUNE':
+                        signedTx = await this.HDWallet.thorchainSignTx(unsignedTx.HDwalletPayload)
+                        log.debug(tag,"signedTx: ",signedTx)
+
+                        broadcastString = {
+                            tx:signedTx,
+                            type:"cosmos-sdk/StdTx",
+                            mode:"sync"
+                        }
+                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+                        //TODO FIXME
+                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+
+                        signedTx.serialized = JSON.stringify(broadcastString)
+                        signedTx.txid = txid
+                        break;
                     case 'ATOM':
-                        signedTx = await this.HDWallet.hdwallet.cosmosSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.HDWallet.cosmosSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
                         break;
                     case 'OSMO':
@@ -1169,15 +1197,15 @@ export class SDK {
                         signedTx = await this.HDWallet.osmosisSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
 
-                        let broadcastString = {
+                        broadcastString = {
                             tx:signedTx,
                             type:"cosmos-sdk/StdTx",
                             mode:"sync"
                         }
-                        const buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
-                        //TODO
-                        //let txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
-
+                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+                        //TODO FIXME
+                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+                        signedTx.txid = txid
                         signedTx.serialized = JSON.stringify(broadcastString)
                         break;
                     case 'ETH':
@@ -1185,7 +1213,7 @@ export class SDK {
                         log.info(tag,"signedTx: ",signedTx)
 
                         //TODO do txid hashing in HDwallet
-                        const txid = keccak256(signedTx.serialized).toString('hex')
+                        txid = keccak256(signedTx.serialized).toString('hex')
                         log.debug(tag,"txid: ",txid)
                         signedTx.txid = txid
 
@@ -1193,8 +1221,6 @@ export class SDK {
                     default:
                         throw Error("network not supported! "+unsignedTx.network)
                 }
-
-
 
                 return signedTx
             } catch (e) {
@@ -1805,6 +1831,7 @@ export class SDK {
         this.broadcastTransaction = async function (signedTx:any) {
             let tag = TAG + " | broadcastTransaction | "
             try {
+                log.info(tag,"broadcastTransaction: ",signedTx)
                 if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
 
                 let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
