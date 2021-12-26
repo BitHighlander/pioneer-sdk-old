@@ -1230,6 +1230,18 @@ export class SDK {
                         signedTx.txid = txid
 
                         break;
+                    case 'BTC':
+                    case 'BCH':
+                    case 'LTC':
+                    case 'DOGE':
+                    case 'DASH':
+                    case 'DGB':
+                    case 'RDD':
+                        log.info(tag,"payload: ",JSON.stringify(unsignedTx.HDwalletPayload))
+                        signedTx = await this.HDWallet.btcSignTx(unsignedTx.HDwalletPayload)
+                        log.info(tag,"signedTx: ",signedTx)
+
+                        break;
                     default:
                         throw Error("network not supported! "+unsignedTx.network)
                 }

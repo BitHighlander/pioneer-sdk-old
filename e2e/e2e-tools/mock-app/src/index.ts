@@ -213,7 +213,7 @@ export class APP {
                     })
 
                     //catchall
-                    // @ts-ignore
+                    //@ts-ignore
                     appExpress.use((err, req, res) => {
                         const { status = 500, message = 'something went wrong. ', data = {} } = err
                         //log.debug(req.body, { status: status, message: message, data: data })
