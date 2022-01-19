@@ -763,7 +763,7 @@ export function xpubConvert(xpub:string,target:string){
 export async function normalize_pubkeys(format:string,pubkeys:any,pathsIn:any, isTestnet?:boolean) {
     let tag = TAG + " | normalize_pubkeys | "
     try {
-        log.debug(tag,"input: ",{format,pubkeys,pathsIn,isTestnet})
+        log.info(tag,"input: ",{format,pubkeys,pathsIn,isTestnet})
         if(!isTestnet) isTestnet = false
 
         if(pathsIn.length !== pubkeys.length){
@@ -792,8 +792,12 @@ export async function normalize_pubkeys(format:string,pubkeys:any,pathsIn:any, i
                 if(pubkey.type === 'zpub'){
                     normalized.type = 'zpub'
                     normalized.zpub = true
+                    log.info(tag,"xpub: ",pubkeys[i].xpub)
+                    if(!pubkeys[i].xpub) throw Error("Missing xpub")
+
                     //convert to zpub
                     let zpub = await xpubConvert(pubkeys[i].xpub,'zpub')
+                    log.info(tag,"zpub: ",pubkeys[i].xpub)
                     normalized.pubkey = zpub
                     pubkey.pubkey = zpub
                 }
@@ -843,7 +847,7 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
     let tag = TAG + " | get_address_from_xpub | "
     try {
         let output
-        log.debug(tag,"Input: ",{xpub,scriptType,coin,account,index,isChange,isTestnet})
+        log.info(tag,"Input: ",{xpub,scriptType,coin,account,index,isChange,isTestnet})
         //if xpub get next unused
         if(!xpub) throw Error("xpub required! coin:"+coin)
         console.log("CHECKPOINT")
@@ -851,21 +855,43 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
         //get pubkey at path
         let publicKey
         if(coin !== 'BTC'){
-            publicKey = bitcoin.bip32.fromBase58(xpub).derive(account).derive(index).publicKey
+            try{
+                publicKey = bitcoin.bip32.fromBase58(xpub).derive(account).derive(index)
+                log.info(tag,"publicKey: ",publicKey)
+                publicKey = publicKey.publicKey
+            }catch(e){
+                throw Error("Failed to derive pubkey! ****************")
+                console.error("failed to derive pubkey: ",e)
+            }
+            log.info(tag,"publicKey: ",publicKey)
         }
 
         let response:any
         switch(coin) {
             case 'BTC':
                 //TODO more types
-                console.log("CHECKPOINT1")
+                console.log("CHECKPOINT1 blabla")
+                console.log("CHECKPOINT1 blabla: ",xpub)
                 if(scriptType === 'bech32' || scriptType === 'p2wpkh'){
                     if(xpub[0] !== 'z') throw Error("103: not a Zpub")
-                    let account0 = new BIP84.fromZPub(xpub)
-                    output = account0.getAddress(0)
-                } else if(scriptType === 'legacy' || 'p2pkh'){
+                    console.log("CHECKBLA xpub: ",xpub)
+                    try{
+                        let account0 = new BIP84.fromZPub(xpub)
+                        console.log("CHECKBLA account0: ",account0)
+                        console.log("CHECKBLA account0: ",account0.getAddress(0))
+                        output = account0.getAddress(0)
+                        console.log("CHECKBLA output: ",output)
+                    }catch(e){
+                        console.error("e: ",e)
+                        output = 'broke:bip84 module'
+                    }
+
+                } else if(scriptType === 'legacy' || scriptType === 'p2pkh'){
                     publicKey = bitcoin.bip32.fromBase58(xpub).derive(account).derive(index).publicKey
+                    if(!publicKey) throw Error("Failed to derive pubkey!")
+                    log.info(tag,"publicKey: ",publicKey)
                     publicKey = publicKey.toString(`hex`)
+                    log.info(tag,"publicKey: (string) ",publicKey)
                     const { address } = bitcoin.payments.p2pkh({
                         pubkey: Buffer.from(publicKey,'hex'),
                         network: NETWORKS[coin.toLowerCase()]
@@ -875,29 +901,8 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
                 console.log("CHECKPOINT2 : ",output)
                 break;
             case 'BCH':
-                publicKey = publicKey.toString(`hex`)
-                response = bitcoin.payments.p2pkh({
-                    pubkey: Buffer.from(publicKey,'hex'),
-                    network: NETWORKS[coin.toLowerCase()]
-                })
-                output = response.address
-                break;
             case 'DOGE':
-                publicKey = publicKey.toString(`hex`)
-                response = bitcoin.payments.p2pkh({
-                    pubkey: Buffer.from(publicKey,'hex'),
-                    network: NETWORKS[coin.toLowerCase()]
-                })
-                output = response.address
-                break;
             case 'DASH':
-                publicKey = publicKey.toString(`hex`)
-                response = bitcoin.payments.p2pkh({
-                    pubkey: Buffer.from(publicKey,'hex'),
-                    network: NETWORKS[coin.toLowerCase()]
-                })
-                output = response.address
-                break;
             case 'LTC':
                 publicKey = publicKey.toString(`hex`)
                 response = bitcoin.payments.p2pkh({
@@ -907,7 +912,11 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
                 output = response.address
                 break;
             case 'ETH':
-                output = ethUtils.bufferToHex(ethUtils.pubToAddress(publicKey,true))
+                try{
+                    output = ethUtils.bufferToHex(ethUtils.pubToAddress(publicKey,true))
+                }catch(e){
+                    output = 'ETH-BROKE'
+                }
                 break;
             case 'RUNE':
                 if(!isTestnet){
@@ -966,7 +975,6 @@ export async function get_address_from_xpub(xpub:string,scriptType:string,coin:s
                 throw Error("coin not yet implemented ! coin: "+coin)
             // code block
         }
-
         log.debug(tag,"output: ",output)
 
 

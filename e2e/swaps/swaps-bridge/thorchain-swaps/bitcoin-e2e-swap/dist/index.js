@@ -24,8 +24,8 @@ let KKSDK = require("@keepkey/keepkey-sdk");
 let { supportedBlockchains, baseAmountToNative, nativeToBaseAmount, } = require("@pioneer-sdk/coins");
 //lib
 const types_1 = require("@shapeshiftoss/types");
-let BLOCKCHAIN = 'bitcoincash';
-let ASSET = 'BCH';
+let BLOCKCHAIN = 'bitcoin';
+let ASSET = 'BTC';
 let MIN_BALANCE = process.env['MIN_BALANCE_ETH'] || "0.04";
 let TEST_AMOUNT = process.env['TEST_AMOUNT'] || "0.0001";
 let spec = process.env['URL_PIONEER_SPEC'] || 'https://pioneers.dev/spec/swagger.json';

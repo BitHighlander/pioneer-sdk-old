@@ -282,17 +282,19 @@ export class SDK {
         this.getPubkeys = async function () {
             let tag = TAG + " | getPubkeys | "
             try {
+                log.info(tag,"checkpoint")
                 if(!this.blockchains || this.blockchains.length === 0) throw Error("Blockchains required!")
                 let output:any = {}
-                log.debug(tag,"blockchains: ",this.blockchains)
+                log.info(tag,"blockchains: ",this.blockchains)
                 //let paths = this.paths(this.blockchains)
                 let paths = getPaths(this.blockchains)
-                log.debug(tag,"getPaths: ",paths)
+                if(!paths || paths.length === 0) throw Error("Failed to get paths!")
+                log.info(tag,"getPaths: ",paths)
                 //verify paths
                 for(let i = 0; i < this.blockchains.length; i++){
                     let blockchain = this.blockchains[i]
                     let symbol = getNativeAssetForBlockchain(blockchain)
-                    log.debug(tag,"symbol: ",symbol)
+                    log.info(tag,"symbol: ",symbol)
                     //find in pubkeys
                     let isFound = paths.find((path: { blockchain: string; }) => {
                         return path.blockchain === blockchain
@@ -324,18 +326,19 @@ export class SDK {
                 // console.log("pathsKeepkey: ",pathsKeepkey)
                 // log.debug(tag,"this.HDWallet: ",this.HDWallet)
                 // log.debug(tag,"this.HDWallet: ",this.HDWallet.wallet)
-                log.debug(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
+                log.info(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
                 const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
-                log.debug("***** pubkeys OUT: ",result)
+                log.info("***** pubkeys OUT: ",result)
                 if(pathsKeepkey.length !== result.length) {
                     log.error(tag, {pathsKeepkey})
                     log.error(tag, {result})
                     throw Error("Device unable to get path!")
                 }
-                log.debug("rawResult: ",result)
-                log.debug("rawResult: ",JSON.stringify(result))
+                log.info(tag,"result: ",result)
+                log.info(tag,"result: ",JSON.stringify(result))
 
-
+                log.info(tag,"paths: ",paths)
+                log.info(tag,"paths: ",JSON.stringify(paths))
                 //rebuild
                 let pubkeys = await normalize_pubkeys('keepkey',result,paths)
                 output.pubkeys = pubkeys
@@ -687,6 +690,7 @@ export class SDK {
         this.pairWallet = async function (walletType:string, wallet:any) {
             let tag = TAG + " | pairWallet | "
             try {
+                log.info(tag,"walletType: ",walletType)
                 //TODO error if server is offline
                 let register
                 if(!this.pioneerApi) throw Error("pioneerApi not set!")
@@ -745,7 +749,8 @@ export class SDK {
 
                     //get pubkeys
                     let pubkeysResult = await this.getPubkeys()
-                    log.debug(tag,"pubkeysResult: ",pubkeysResult)
+                    log.info(tag,"pubkeysResult: ",pubkeysResult)
+                    if(!pubkeysResult) throw Error("Failed to get pubkeys! (pairWallet)")
                     this.context = pubkeysResult.context
 
                     //register
