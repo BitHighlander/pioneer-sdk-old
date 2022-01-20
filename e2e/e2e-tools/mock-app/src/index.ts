@@ -260,6 +260,7 @@ export class APP {
                         let invocationInfo = await app.getInvocation(event.invocationId)
                         let unsignedTx = invocationInfo.unsignedTx
                         log.info(tag,'unsignedTx: ',unsignedTx);
+                        log.info(tag,'unsignedTx: ',JSON.stringify(unsignedTx));
 
                         //
                         if(ACCEPTED_INVOCATIONS.indexOf(event.invocationId) === -1){

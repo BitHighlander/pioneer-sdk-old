@@ -16,14 +16,14 @@ let SDK = require('@pioneer-sdk/sdk')
 let wait = require('wait-promise');
 let sleep = wait.sleep;
 
-let BLOCKCHAIN = 'litecoin'
-let ASSET = 'LTC'
-let MIN_BALANCE = process.env['MIN_BALANCE_LTC'] || "0.004"
+let BLOCKCHAIN = 'bitcoin'
+let ASSET = 'BTC'
+let MIN_BALANCE = process.env['MIN_BALANCE_BTC'] || "0.00004"
 let TEST_AMOUNT = process.env['TEST_AMOUNT'] || "0.0001"
 let spec = process.env['URL_PIONEER_SPEC'] || 'https://pioneers.dev/spec/swagger.json'
 let wss = process.env['URL_PIONEER_SOCKET'] || 'wss://pioneers.dev'
-let FAUCET_LTC_ADDRESS = process.env['FAUCET_LTC_ADDRESS']
-let FAUCET_ADDRESS = FAUCET_LTC_ADDRESS
+let FAUCET_BTC_ADDRESS = process.env['FAUCET_BTC_ADDRESS']
+let FAUCET_ADDRESS = FAUCET_BTC_ADDRESS
 if(!FAUCET_ADDRESS) throw Error("Need Faucet Address!")
 
 let noBroadcast = false
@@ -64,7 +64,7 @@ const test_service = async function () {
 
         //get bridge userInfo
         let userInfoBridge = await app.getBridgeUser()
-        log.info("userInfoBridge: ",userInfoBridge)
+        log.debug("userInfoBridge: ",userInfoBridge)
         //verify bridge userInfo has asset + balance
         assert(userInfoBridge)
         assert(userInfoBridge.pubkeys)
@@ -173,6 +173,7 @@ const test_service = async function () {
             context:app.context,
             type:'transfer',
             addressFrom:pubkeyIn.master,
+            pubkeyFrom:pubkeyIn,
             recipient: FAUCET_ADDRESS,
             asset: ASSET,
             network: ASSET,
@@ -194,10 +195,10 @@ const test_service = async function () {
         }
 
         //build swap
-        let responseSwap = await app.buildTx(tx,options,ASSET)
-        assert(responseSwap)
-        log.debug(tag,"responseSwap: ",responseSwap)
-        assert(responseSwap.HDwalletPayload)
+        let responseTx = await app.buildTx(tx,options,ASSET)
+        assert(responseTx)
+        log.debug(tag,"responseTx: ",responseTx)
+        assert(responseTx.HDwalletPayload)
         console.timeEnd('start2build');
 
         //invoke unsigned
@@ -206,7 +207,7 @@ const test_service = async function () {
             fee:{
                 priority:3
             },
-            unsignedTx:responseSwap,
+            unsignedTx:responseTx,
             context:app.context,
             network:ASSET
         }

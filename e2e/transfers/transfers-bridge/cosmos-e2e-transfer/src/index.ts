@@ -16,23 +16,6 @@ let SDK = require('@pioneer-sdk/sdk')
 let wait = require('wait-promise');
 let sleep = wait.sleep;
 
-// import {
-//     Transfer
-// } from "@pioneer-sdk/types";
-
-const { NodeWebUSBKeepKeyAdapter } = require('@shapeshiftoss/hdwallet-keepkey-nodewebusb')
-const core = require('@shapeshiftoss/hdwallet-core');
-let KKSDK = require("@keepkey/keepkey-sdk")
-
-let {
-    supportedBlockchains,
-    baseAmountToNative,
-    nativeToBaseAmount,
-} = require("@pioneer-sdk/coins")
-
-//lib
-import { ChainTypes } from '@shapeshiftoss/types'
-
 let BLOCKCHAIN = 'cosmos'
 let ASSET = 'ATOM'
 let MIN_BALANCE = process.env['MIN_BALANCE_ETH'] || "0.04"
@@ -239,20 +222,54 @@ const test_service = async function () {
             assert(responseInvoke.invocationId)
             log.error()
         }
-        log.debug(tag,"responseInvoke: ",responseInvoke)
+        log.info(tag,"responseInvoke: ",responseInvoke)
 
         invocationId = responseInvoke.invocationId
         transaction.invocationId = invocationId
 
         //get invocation
         let invocationView1 = await app.getInvocation(invocationId)
-        log.debug(tag,"invocationView1: (VIEW) ",invocationView1)
+        log.info(tag,"invocationView1: (VIEW) ",invocationView1)
         assert(invocationView1)
         assert(invocationView1.state)
         assert(invocationView1.invocation)
         assert(invocationView1.invocation.unsignedTx)
         assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
         //assert.equal(invocationView1.state,'builtTx')
+
+        //sign with bridge
+        let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
+        signedTx = signedTx.signedTx
+        log.info(tag,"signedTx:  ",signedTx)
+        signedTx.invocationId = invocationId
+        signedTx.network = ASSET
+
+        //update payload with signed
+        let updateBody:any = {
+            network:invocationView1.network,
+            invocationId,
+            invocation:invocationView1.invocation,
+            unsignedTx:invocationView1.unsignedTx,
+            signedTx
+        }
+
+        //update invocation remote
+        let resultUpdate = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate:  ",resultUpdate)
+
+        //broadcast
+        let broadcastResp = await app.broadcastTransaction(signedTx)
+        assert(broadcastResp)
+        assert(broadcastResp.txid)
+        log.info(tag,"broadcastResp:  ",broadcastResp)
+
+        //update payload with signed
+        updateBody.broadcastResp = broadcastResp
+        //update invocation remote
+        let resultUpdate2 = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate2:  ",resultUpdate2)
+
+
 
         //TODO validate payload
 

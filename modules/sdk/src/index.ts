@@ -3,6 +3,9 @@
      Pioneer SDK
         A typescript sdk for integrating cryptocurrency wallets info apps
 
+
+    curl -d "param1=value1&param2=value2" -X POST http://localhost:1646/send
+
  */
 
 const TAG = " | Pioneer-sdk | "
@@ -45,10 +48,10 @@ const TxBuilder = require("@pioneer-platform/pioneer-tx-builder");
 /*
     ShapeShiftOss
  */
-import { NativeAdapterArgs, NativeHDWallet } from '@shapeshiftoss/hdwallet-native'
-import { ChainAdapterManager } from '@shapeshiftoss/chain-adapters'
+// import { NativeAdapterArgs, NativeHDWallet } from '@shapeshiftoss/hdwallet-native'
+// import { ChainAdapterManager } from '@shapeshiftoss/chain-adapters'
 // import { caip2 } from '@shapeshiftoss/caip'
-import { UtxoAccountType, BIP44Params } from '@shapeshiftoss/types'
+// import { UtxoAccountType, BIP44Params } from '@shapeshiftoss/types'
 // import { getPriceHistory } from '@shapeshiftoss/market-service'
 // //import { Vault } from '@shapeshiftoss/hdwallet-native-vault'
 // import { SwapperManager, ZrxSwapper } from '@shapeshiftoss/swapper'
@@ -195,6 +198,8 @@ export class SDK {
     private pair: (code: string) => Promise<any>;
     getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
+    private getPaths: () => any;
+    private signTxBridge: (unsignedTx: any) => Promise<any>;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
@@ -279,8 +284,8 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-        this.getPubkeys = async function () {
-            let tag = TAG + " | getPubkeys | "
+        this.getPaths = function () {
+            let tag = TAG + " | loadPubkeys | "
             try {
                 if(!this.blockchains || this.blockchains.length === 0) throw Error("Blockchains required!")
                 let output:any = {}
@@ -316,7 +321,17 @@ export class SDK {
                     pathForKeepkey.showDisplay = false
                     pathsKeepkey.push(pathForKeepkey)
                 }
-
+                return pathsKeepkey
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
+        this.getPubkeys = async function () {
+            let tag = TAG + " | getPubkeys | "
+            try {
+                let output:any
+                let paths = getPaths()
+                let pathsKeepkey = this.getPaths()
                 log.notice("***** paths IN: ",pathsKeepkey.length)
                 log.notice("***** paths IN: ",pathsKeepkey)
                 //NOTE: keepkey returns an ordered array.
@@ -346,7 +361,7 @@ export class SDK {
                     throw Error("Failed to Normalize pubkeys!")
                 }
                 log.debug(tag,"pubkeys: (normalized) ",pubkeys.length)
-                log.debug(tag,"pubkeys: (normalized) ",pubkeys)
+                log.info(tag,"pubkeys: (normalized) ",pubkeys)
 
                 //add feature info to pubkey
                 let keyedWallet:any = {}
@@ -735,6 +750,7 @@ export class SDK {
                 } else if (walletType === 'keepkey'){
                     let isInit = await wallet.isInitialized()
                     if(!isInit) throw Error("Can not pair! not initialized!")
+                    if(!wallet) throw Error("Con not pair! wallet not defined!")
                     //set SDK to HDwallet
                     // console.log("keyring: ",wallet.transport.keyring)
                     this.HDWallet = wallet
@@ -765,48 +781,49 @@ export class SDK {
                         provider:'lol'
                     }
                 } else if(walletType === 'native'){
-                    log.debug(tag,"wallet: ",wallet)
-                    log.debug(tag,"wallet: ",wallet)
-
-                    //load wallet into local HDwallet
-                    const nativeAdapterArgs: NativeAdapterArgs = {
-                        mnemonic: wallet.mnemonic,
-                        deviceId: 'test'
-                    }
+                    throw Error('fucked lol')
+                    // log.debug(tag,"wallet: ",wallet)
+                    // log.debug(tag,"wallet: ",wallet)
                     //
-                    //set SDK to HDwallet
-                    this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
-                    let resultInit = await this.HDWallet.initialize()
-                    log.debug(tag,"resultInit: ",resultInit)
-                    let isInitialized = this.HDWallet.isInitialized()
-                    log.debug(tag,"isInitialized: ",isInitialized)
-                    if(!isInitialized) throw Error("failed to initialize")
-
-                    //get pubkeys
-                    //get serailized wallet
-                    let pubkeysResp = await this.getPubkeys()
-                    let walletWatch = pubkeysResp.wallet
-                    let pubkeys = pubkeysResp.pubkeys
-
-                    this.context = walletWatch.WALLET_ID
-                    log.debug(tag,"new context: ",this.context)
-
-                    //register
-                    register = {
-                        username:this.username,
-                        blockchains:this.blockchains,
-                        context:this.context,
-                        walletDescription:{
-                            context:this.context,
-                            type:'native'
-                        },
-                        data:{
-                            pubkeys
-                        },
-                        queryKey:this.queryKey,
-                        auth:'lol',
-                        provider:'lol'
-                    }
+                    // //load wallet into local HDwallet
+                    // const nativeAdapterArgs: NativeAdapterArgs = {
+                    //     mnemonic: wallet.mnemonic,
+                    //     deviceId: 'test'
+                    // }
+                    // //
+                    // //set SDK to HDwallet
+                    // this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
+                    // let resultInit = await this.HDWallet.initialize()
+                    // log.debug(tag,"resultInit: ",resultInit)
+                    // let isInitialized = this.HDWallet.isInitialized()
+                    // log.debug(tag,"isInitialized: ",isInitialized)
+                    // if(!isInitialized) throw Error("failed to initialize")
+                    //
+                    // //get pubkeys
+                    // //get serailized wallet
+                    // let pubkeysResp = await this.getPubkeys()
+                    // let walletWatch = pubkeysResp.wallet
+                    // let pubkeys = pubkeysResp.pubkeys
+                    //
+                    // this.context = walletWatch.WALLET_ID
+                    // log.debug(tag,"new context: ",this.context)
+                    //
+                    // //register
+                    // register = {
+                    //     username:this.username,
+                    //     blockchains:this.blockchains,
+                    //     context:this.context,
+                    //     walletDescription:{
+                    //         context:this.context,
+                    //         type:'native'
+                    //     },
+                    //     data:{
+                    //         pubkeys
+                    //     },
+                    //     queryKey:this.queryKey,
+                    //     auth:'lol',
+                    //     provider:'lol'
+                    // }
                 }else{
                     throw Error("102: Unhandled format! "+walletType)
                 }
@@ -1141,12 +1158,31 @@ export class SDK {
             }
         }
 
+        this.signTxBridge = async function (unsignedTx:any) {
+            let tag = TAG + " | signTxBridge | "
+            try {
+
+                //send to bridge
+                let respBridge = await axios.post(this.bridge+"/sign",{data:unsignedTx})
+                log.debug(tag,"respBridge: ",respBridge)
+
+                return respBridge.data
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
 
         this.signTx = async function (unsignedTx:any) {
             let tag = TAG + " | signTx | "
             try {
                 if(!this.HDWallet) throw Error('Can not not sign if a HDWwallet is not paired!')
-                log.info(tag,"unsignedTx: ",unsignedTx)
+                let isInit = await this.HDWallet.isInitialized()
+                if(!isInit) throw Error('Can not not sign not initialized!')
+                if(!this.HDWallet.features) throw Error('keepkey not paired!')
+                log.info(tag,"isInit: ",isInit)
+                log.info(tag,"HDWallet: ",this.HDWallet.features)
+                log.info(tag,"unsignedTx: ",JSON.stringify(unsignedTx))
+
                 if(!unsignedTx) throw Error('Invalid payload! empty')
                 if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
 
@@ -1855,37 +1891,36 @@ export class SDK {
         this.broadcastTransaction = async function (signedTx:any) {
             let tag = TAG + " | broadcastTransaction | "
             try {
-                log.info(tag,"broadcastTransaction: ",signedTx)
-                if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
-
-                let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
-                invocation = invocation.data
-                log.debug(tag,"invocation: ",invocation)
-
-                //context
-                let context = this.context
-                if(!context) {
-                    throw Error("103: could not find context "+context)
-                }
-
-                //TODO fix this tech debt
-                //normalize
-                if(!invocation.network) invocation.network = invocation.invocation.network
-                if(!invocation.invocation.invocationId) invocation.invocation.invocationId = invocation.invocation.invocationId
-                if(!invocation.signedTx.network) invocation.signedTx.network = invocation.network
-                if(!invocation.signedTx.invocationId) invocation.signedTx.invocationId = invocation.invocationId
-                if(invocation.signedTx && invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-                if(invocation.signedTx && invocation.invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-
-
-                if(this.isTestnet && signedTx.network === 'BTC'){
-                    signedTx.network = "TEST"
-                }else{
-                    signedTx.network = signedTx.network
-                }
-                log.debug(tag,"signedTx: ",signedTx)
-                let resultBroadcast = await this.pioneerApi.Broadcast(null,invocation.signedTx)
-                log.debug(tag,"resultBroadcast: ",resultBroadcast.data)
+                if(!signedTx.network) throw Error("103: invalid signed TX required network!")
+                // log.info(tag,"broadcastTransaction: ",signedTx)
+                // if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
+                //
+                // let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
+                // invocation = invocation.data
+                // log.info(tag,"invocation: ",invocation)
+                //
+                // //context
+                // let context = this.context
+                // if(!context) {
+                //     throw Error("103: could not find context "+context)
+                // }
+                //
+                // //TODO fix this tech debt
+                // //normalize
+                // if(!invocation.network) invocation.network = invocation.invocation.network
+                // if(!invocation.invocation.invocationId) invocation.invocation.invocationId = invocation.invocation.invocationId
+                // if(!invocation.signedTx.network) invocation.signedTx.network = invocation.network
+                // if(!invocation.signedTx.invocationId) invocation.signedTx.invocationId = invocation.invocationId
+                // if(invocation.signedTx && invocation.noBroadcast) invocation.signedTx.noBroadcast = true
+                // if(invocation.signedTx && invocation.invocation.noBroadcast) invocation.signedTx.noBroadcast = true
+                //
+                //
+                // if(this.isTestnet && signedTx.network === 'BTC'){
+                //     signedTx.network = "TEST"
+                // }
+                log.info(tag,"signedTx: ",signedTx)
+                let resultBroadcast = await this.pioneerApi.Broadcast(null,signedTx)
+                log.info(tag,"resultBroadcast: ",resultBroadcast.data)
                 return resultBroadcast.data;
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -1894,7 +1929,7 @@ export class SDK {
         this.invokeUnsigned = async function (tx:any,options:any,asset:string) {
             let tag = TAG + " | invokeUnsigned | "
             try {
-                log.debug(tag,"deposit: ",tx)
+                log.info(tag,"deposit: ",tx)
                 log.debug(tag,"options: ",options)
                 if(!tx.unsignedTx) throw Error('unsigned Required!')
                 //verbose
@@ -1914,10 +1949,11 @@ export class SDK {
                     unsignedTx:tx.unsignedTx,
                 }
 
-                log.debug(tag,"invocation: ",invocation)
+                // log.debug(tag,"invocation: ",invocation)
                 let result = await this.invoke.invoke(invocation)
                 console.log("result: ",result)
 
+                // return result
                 return result
             } catch (e) {
                 log.error(tag, "e: ", e)
