@@ -3,6 +3,9 @@
      Pioneer SDK
         A typescript sdk for integrating cryptocurrency wallets info apps
 
+
+    curl -d "param1=value1&param2=value2" -X POST http://localhost:1646/send
+
  */
 
 const TAG = " | Pioneer-sdk | "
@@ -26,7 +29,10 @@ let {
     assetToBase,
     assetAmount,
     getSwapProtocals,
-    normalize_pubkeys,
+    xpubConvert,
+    addressNListToBIP32,
+    COIN_MAP_LONG,
+    COIN_MAP_KEEPKEY_LONG
 } = require('@pioneer-sdk/coins')
 
 let Invoke = require("@pioneer-platform/pioneer-invoke")
@@ -184,7 +190,7 @@ export class SDK {
     public loadPubkeys: (pubkeys: any) => void;
     public dbPubkeys: any;
     public dbBalances: any;
-    public pairWallet: (walletType:string, wallet: any) => Promise<any>;
+    public pairWallet: (walletType:string, wallet: any, pubkeys: any) => Promise<any>;
     public chainAdapterManager: any;
     public HDWallet: any;
     public buildTx: (tx: any) => Promise<any>;
@@ -195,6 +201,7 @@ export class SDK {
     private pair: (code: string) => Promise<any>;
     getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
+    private signTxBridge: (unsignedTx: any) => Promise<any>;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
@@ -340,7 +347,120 @@ export class SDK {
                 log.info(tag,"paths: ",paths)
                 log.info(tag,"paths: ",JSON.stringify(paths))
                 //rebuild
-                let pubkeys = await normalize_pubkeys('keepkey',result,paths)
+                // let pubkeys = await normalize_pubkeys('keepkey',result,paths)
+                let pubkeys:any = []
+                for(let i = 0; i < result.length; i++){
+                    let pubkey:any = paths[i]
+                    log.debug(tag,"pubkey: ",pubkey)
+                    let normalized:any = {}
+                    normalized.path = addressNListToBIP32(paths[i].addressNList)
+                    normalized.pathMaster = addressNListToBIP32(paths[i].addressNListMaster)
+
+                    log.debug(tag,"pubkey: ",pubkey)
+                    normalized.source = 'keepkey'
+                    if(pubkey.type === 'xpub'){
+                        normalized.type = 'xpub'
+                        normalized.xpub = true
+                        normalized.pubkey = result[i].xpub
+                        pubkey.pubkey = result[i].xpub
+                    }
+                    if(pubkey.type === 'zpub'){
+                        normalized.type = 'zpub'
+                        normalized.zpub = true
+                        log.info(tag,"xpub: ",result[i].xpub)
+                        if(!result[i].xpub) throw Error("Missing xpub")
+
+                        //convert to zpub
+                        let zpub = await xpubConvert(result[i].xpub,'zpub')
+                        log.info(tag,"zpub: ",result[i].xpub)
+                        normalized.pubkey = zpub
+                        pubkey.pubkey = zpub
+                    }
+                    //TODO get this from supported coins? DRY
+                    if(pubkey.symbol === 'ETH' || pubkey.symbol === 'RUNE' || pubkey.symbol === 'BNB' || pubkey.symbol === 'ATOM' || pubkey.symbol === 'OSMO'){
+                        pubkey.pubkey = result[i].xpub
+                    }
+                    normalized.note = pubkey.note
+                    normalized.symbol = pubkey.symbol
+                    normalized.blockchain = COIN_MAP_LONG[pubkey.symbol]
+                    normalized.network = COIN_MAP_LONG[pubkey.symbol]
+                    //normalized.path = addressNListToBIP32(pubkey.addressNList)
+
+                    //get master address
+                    let address
+                    switch(pubkey.symbol) {
+                        case 'BTC':
+                        case 'BCH':
+                        case 'DOGE':
+                        case 'DASH':
+                        case 'LTC':
+                            address = await this.HDWallet.btcGetAddress({
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            break;
+                        case 'ETH':
+                            address = await this.HDWallet.ethGetAddress({
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            break;
+                        case 'RUNE':
+                            address = await this.HDWallet.thorchainGetAddress({
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            break;
+                        case 'ATOM':
+                            address = await this.HDWallet.cosmosGetAddress({
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            break;
+                        case 'OSMO':
+                            // address = await this.HDWallet.osmosisGetAddress({
+                            //     addressNList:paths[i].addressNListMaster,
+                            //     coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                            //     scriptType: paths[i].script_type,
+                            //     showDisplay: false
+                            // })
+                            address = 'osmo:TODO'
+                            break;
+                        case 'BNB':
+                            address = await this.HDWallet.binanceGetAddress({
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            break;
+                        default:
+                            throw Error("coin not yet implemented ! coin: "+pubkey.symbol)
+                        // code block
+                    }
+                    if(!address){
+                        log.error("Failed to get address for pubkey: ",pubkey)
+                        throw Error("address master required for valid pubkey")
+                    }
+                    normalized.script_type = pubkey.script_type //TODO select script type?
+                    if(pubkey.symbol === 'ETH' || pubkey.symbol === 'RUNE' || pubkey.symbol === 'BNB' || pubkey.symbol === 'ATOM' || pubkey.symbol === 'OSMO'){
+                        normalized.type = "address"
+                        normalized.pubkey = address
+                    }
+                    normalized.master = address
+                    normalized.address = address
+
+                    pubkeys.push(normalized)
+                }
+                log.info(tag,"pubkeys:",pubkeys)
                 output.pubkeys = pubkeys
                 this.pubkeys = pubkeys
                 if(pubkeys.length !== result.length) {
@@ -582,6 +702,7 @@ export class SDK {
                         case 'update':
                             break;
                         case 'signRequest':
+                            log.info("signRequest: ",event.invocation.unsignedTx)
                             break;
                         default:
                             log.info(tag,"unhandled: ",event.type)
@@ -687,7 +808,7 @@ export class SDK {
               TODO kepler
 
          */
-        this.pairWallet = async function (walletType:string, wallet:any) {
+        this.pairWallet = async function (walletType:string, wallet:any, pubkeys:any) {
             let tag = TAG + " | pairWallet | "
             try {
                 log.info(tag,"walletType: ",walletType)
@@ -746,24 +867,18 @@ export class SDK {
                     // wallet.on('event', async function(event:any) {
                     //     console.log("EVENT: ",event)
                     // });
-
-                    //get pubkeys
-                    let pubkeysResult = await this.getPubkeys()
-                    log.info(tag,"pubkeysResult: ",pubkeysResult)
-                    if(!pubkeysResult) throw Error("Failed to get pubkeys! (pairWallet)")
-                    this.context = pubkeysResult.context
-
+                    let pubkeys = await this.getPubkeys()
                     //register
                     register = {
                         username:this.username,
                         blockchains:this.blockchains,
-                        context:pubkeysResult.context,
+                        context:pubkeys.context,
                         walletDescription:{
-                            context:pubkeysResult.context,
+                            context:pubkeys.context,
                             type:'keepkey'
                         },
                         data:{
-                            pubkeys:pubkeysResult.pubkeys
+                            pubkeys:pubkeys.pubkeys
                         },
                         queryKey:this.queryKey,
                         auth:'lol',
@@ -1136,8 +1251,7 @@ export class SDK {
                 if(!tx.addressFrom) throw Error("invalid tx addressFrom required!")
                 log.debug(tag,"tx: ",tx)
 
-                //TODO use construction api
-
+                //@TODO use construction api
                 //use txBuilder
                 let unsginedTx = await this.txBuilder.buildTx(tx)
                 return unsginedTx
@@ -1146,6 +1260,19 @@ export class SDK {
             }
         }
 
+        this.signTxBridge = async function (unsignedTx:any) {
+            let tag = TAG + " | signTxBridge | "
+            try {
+
+                //send to bridge
+                let respBridge = await axios.post(this.bridge+"/sign",{data:unsignedTx})
+                log.debug(tag,"respBridge: ",respBridge)
+
+                return respBridge.data
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
 
         this.signTx = async function (unsignedTx:any) {
             let tag = TAG + " | signTx | "
@@ -1860,37 +1987,36 @@ export class SDK {
         this.broadcastTransaction = async function (signedTx:any) {
             let tag = TAG + " | broadcastTransaction | "
             try {
-                log.info(tag,"broadcastTransaction: ",signedTx)
-                if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
-
-                let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
-                invocation = invocation.data
-                log.debug(tag,"invocation: ",invocation)
-
-                //context
-                let context = this.context
-                if(!context) {
-                    throw Error("103: could not find context "+context)
-                }
-
-                //TODO fix this tech debt
-                //normalize
-                if(!invocation.network) invocation.network = invocation.invocation.network
-                if(!invocation.invocation.invocationId) invocation.invocation.invocationId = invocation.invocation.invocationId
-                if(!invocation.signedTx.network) invocation.signedTx.network = invocation.network
-                if(!invocation.signedTx.invocationId) invocation.signedTx.invocationId = invocation.invocationId
-                if(invocation.signedTx && invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-                if(invocation.signedTx && invocation.invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-
-
-                if(this.isTestnet && signedTx.network === 'BTC'){
-                    signedTx.network = "TEST"
-                }else{
-                    signedTx.network = signedTx.network
-                }
-                log.debug(tag,"signedTx: ",signedTx)
-                let resultBroadcast = await this.pioneerApi.Broadcast(null,invocation.signedTx)
-                log.debug(tag,"resultBroadcast: ",resultBroadcast.data)
+                if(!signedTx.network) throw Error("103: invalid signed TX required network!")
+                // log.info(tag,"broadcastTransaction: ",signedTx)
+                // if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
+                //
+                // let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
+                // invocation = invocation.data
+                // log.info(tag,"invocation: ",invocation)
+                //
+                // //context
+                // let context = this.context
+                // if(!context) {
+                //     throw Error("103: could not find context "+context)
+                // }
+                //
+                // //TODO fix this tech debt
+                // //normalize
+                // if(!invocation.network) invocation.network = invocation.invocation.network
+                // if(!invocation.invocation.invocationId) invocation.invocation.invocationId = invocation.invocation.invocationId
+                // if(!invocation.signedTx.network) invocation.signedTx.network = invocation.network
+                // if(!invocation.signedTx.invocationId) invocation.signedTx.invocationId = invocation.invocationId
+                // if(invocation.signedTx && invocation.noBroadcast) invocation.signedTx.noBroadcast = true
+                // if(invocation.signedTx && invocation.invocation.noBroadcast) invocation.signedTx.noBroadcast = true
+                //
+                //
+                // if(this.isTestnet && signedTx.network === 'BTC'){
+                //     signedTx.network = "TEST"
+                // }
+                log.info(tag,"signedTx: ",signedTx)
+                let resultBroadcast = await this.pioneerApi.Broadcast(null,signedTx)
+                log.info(tag,"resultBroadcast: ",resultBroadcast.data)
                 return resultBroadcast.data;
             } catch (e) {
                 log.error(tag, "e: ", e)

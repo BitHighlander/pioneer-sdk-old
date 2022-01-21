@@ -279,7 +279,9 @@ export class APP {
                             let resultUpdate = await app.updateInvocation(updateBody)
                             log.info(tag,"resultUpdate: ",resultUpdate)
 
-                            let broadcastResult = await app.broadcastTransaction(updateBody)
+                            updateBody.signedTx.network = event.network
+                            updateBody.signedTx.invocationId = event.invocationId
+                            let broadcastResult = await app.broadcastTransaction(updateBody.signedTx)
                             log.info('broadcastResult: ', broadcastResult)
 
                         } else {

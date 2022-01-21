@@ -254,6 +254,40 @@ const test_service = async function () {
         assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
         //assert.equal(invocationView1.state,'builtTx')
 
+        //sign with bridge
+        let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
+        signedTx = signedTx.signedTx
+        log.info(tag,"signedTx:  ",signedTx)
+        signedTx.invocationId = invocationId
+        signedTx.network = ASSET
+
+        //update payload with signed
+        let updateBody:any = {
+            network:invocationView1.network,
+            invocationId,
+            invocation:invocationView1.invocation,
+            unsignedTx:invocationView1.unsignedTx,
+            signedTx
+        }
+
+        //update invocation remote
+        let resultUpdate = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate:  ",resultUpdate)
+
+        //broadcast
+        let broadcastResp = await app.broadcastTransaction(signedTx)
+        assert(broadcastResp)
+        assert(broadcastResp.txid)
+        log.info(tag,"broadcastResp:  ",broadcastResp)
+
+        //update payload with signed
+        updateBody.broadcastResp = broadcastResp
+        //update invocation remote
+        let resultUpdate2 = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate2:  ",resultUpdate2)
+
+
+
         //TODO validate payload
 
         //sign transaction

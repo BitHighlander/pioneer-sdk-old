@@ -33,15 +33,15 @@ let {
 //lib
 import { ChainTypes } from '@shapeshiftoss/types'
 
-let BLOCKCHAIN = 'cosmos'
-let ASSET = 'ATOM'
+let BLOCKCHAIN = 'ethereum'
+let ASSET = 'ETH'
 let MIN_BALANCE = process.env['MIN_BALANCE_ETH'] || "0.04"
 let TEST_AMOUNT = process.env['TEST_AMOUNT'] || "0.0001"
 let spec = process.env['URL_PIONEER_SPEC'] || 'https://pioneers.dev/spec/swagger.json'
 let wss = process.env['URL_PIONEER_SOCKET'] || 'wss://pioneers.dev'
 let NO_BROADCAST = process.env['E2E_BROADCAST'] || true
-let FAUCET_ATOM_ADDRESS = process.env['FAUCET_ATOM_ADDRESS']
-let FAUCET_ADDRESS = FAUCET_ATOM_ADDRESS
+let FAUCET_ETH_ADDRESS = process.env['FAUCET_ETH_ADDRESS']
+let FAUCET_ADDRESS = FAUCET_ETH_ADDRESS
 if(!FAUCET_ADDRESS) throw Error("Need Faucet Address!")
 
 let noBroadcast = false
@@ -237,7 +237,7 @@ const test_service = async function () {
         assert(responseInvoke)
         if(!responseInvoke.success){
             assert(responseInvoke.invocationId)
-            log.error()
+            log.error("failed to invoke!")
         }
         log.debug(tag,"responseInvoke: ",responseInvoke)
 
@@ -255,6 +255,42 @@ const test_service = async function () {
         //assert.equal(invocationView1.state,'builtTx')
 
         //TODO validate payload
+
+        //sign with sdk
+
+
+
+        //sign with bridge
+        // let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
+        // signedTx = signedTx.signedTx
+        // log.info(tag,"signedTx:  ",signedTx)
+        // signedTx.invocationId = invocationId
+        // signedTx.network = ASSET
+        //
+        // //update payload with signed
+        // let updateBody:any = {
+        //     network:invocationView1.network,
+        //     invocationId,
+        //     invocation:invocationView1.invocation,
+        //     unsignedTx:invocationView1.unsignedTx,
+        //     signedTx
+        // }
+        //
+        // //update invocation remote
+        // let resultUpdate = await app.updateInvocation(updateBody)
+        // log.info(tag,"resultUpdate:  ",resultUpdate)
+        //
+        // //broadcast
+        // let broadcastResp = await app.broadcastTransaction(signedTx)
+        // assert(broadcastResp)
+        // assert(broadcastResp.txid)
+        // log.info(tag,"broadcastResp:  ",broadcastResp)
+        //
+        // //update payload with signed
+        // updateBody.broadcastResp = broadcastResp
+        // //update invocation remote
+        // let resultUpdate2 = await app.updateInvocation(updateBody)
+        // log.info(tag,"resultUpdate2:  ",resultUpdate2)
 
         //sign transaction
         log.notice("************* SIGN ON KEEPKEY! LOOK DOWN BRO ***************")
@@ -274,77 +310,77 @@ const test_service = async function () {
         console.timeEnd('start2broadcast');
 
         //wait for confirmation
-        console.time('timeToConfirmed')
-        if(!noBroadcast){
-            log.test(tag,"Broadcasting!")
-
-            let invocationView4 = await app.getInvocation(invocationId)
-            log.debug(tag,"invocationView4: (VIEW) ",invocationView4)
-            assert(invocationView4)
-            assert(invocationView4.state)
-            // assert.equal(invocationView3.state,'broadcasted')
-
-            /*
-                Status codes
-                -1: errored
-                 0: unknown
-                 1: built
-                 2: broadcasted
-                 3: confirmed
-                 4: fullfilled (swap completed)
-             */
-
-
-            //monitor tx lifecycle
-            let isConfirmed = false
-            let isFullfilled = false
-            let fullfillmentTxid = false
-            let currentStatus
-            let statusCode = 0
-
-            while(!isConfirmed){
-                //get invocationInfo
-                await sleep(6000)
-                let invocationInfo = await app.getInvocation(invocationId)
-                log.test(tag,"invocationInfo: ",invocationInfo.state)
-
-                if(invocationInfo.state === 'builtTx'){
-                    //rebroadcast
-                }
-
-
-                if(invocationInfo && invocationInfo.isConfirmed){
-                    log.test(tag,"Confirmed!")
-                    statusCode = 3
-                    isConfirmed = true
-                    console.timeEnd('timeToConfirmed')
-                    console.time('confirm2fullfillment')
-                } else {
-                    log.test(tag,"Not Confirmed!")
-                }
-
-            }
-
-            while(!isFullfilled){
-                //get invocationInfo
-                await sleep(6000)
-                let invocationInfo = await app.getInvocation(invocationId)
-                log.test(tag,"invocationInfo: ",invocationInfo.state)
-
-                if(invocationInfo && invocationInfo.isConfirmed && invocationInfo.isFullfilled) {
-                    log.test(tag,"is fullfilled!")
-                    fullfillmentTxid = invocationInfo.fullfillmentTxid
-                    isFullfilled = true
-                    console.timeEnd('confirm2fullfillment')
-                    //get tx gas price
-                } else {
-                    log.test(tag,"unfullfilled!")
-                }
-            }
-            log.notice("****** TEST Report: "+fullfillmentTxid+" ******")
-        }
-        let result = await app.stopSocket()
-        log.debug(tag,"result: ",result)
+        // console.time('timeToConfirmed')
+        // if(!noBroadcast){
+        //     log.test(tag,"Broadcasting!")
+        //
+        //     let invocationView4 = await app.getInvocation(invocationId)
+        //     log.debug(tag,"invocationView4: (VIEW) ",invocationView4)
+        //     assert(invocationView4)
+        //     assert(invocationView4.state)
+        //     // assert.equal(invocationView3.state,'broadcasted')
+        //
+        //     /*
+        //         Status codes
+        //         -1: errored
+        //          0: unknown
+        //          1: built
+        //          2: broadcasted
+        //          3: confirmed
+        //          4: fullfilled (swap completed)
+        //      */
+        //
+        //
+        //     //monitor tx lifecycle
+        //     let isConfirmed = false
+        //     let isFullfilled = false
+        //     let fullfillmentTxid = false
+        //     let currentStatus
+        //     let statusCode = 0
+        //
+        //     while(!isConfirmed){
+        //         //get invocationInfo
+        //         await sleep(6000)
+        //         let invocationInfo = await app.getInvocation(invocationId)
+        //         log.test(tag,"invocationInfo: ",invocationInfo.state)
+        //
+        //         if(invocationInfo.state === 'builtTx'){
+        //             //rebroadcast
+        //         }
+        //
+        //
+        //         if(invocationInfo && invocationInfo.isConfirmed){
+        //             log.test(tag,"Confirmed!")
+        //             statusCode = 3
+        //             isConfirmed = true
+        //             console.timeEnd('timeToConfirmed')
+        //             console.time('confirm2fullfillment')
+        //         } else {
+        //             log.test(tag,"Not Confirmed!")
+        //         }
+        //
+        //     }
+        //
+        //     while(!isFullfilled){
+        //         //get invocationInfo
+        //         await sleep(6000)
+        //         let invocationInfo = await app.getInvocation(invocationId)
+        //         log.test(tag,"invocationInfo: ",invocationInfo.state)
+        //
+        //         if(invocationInfo && invocationInfo.isConfirmed && invocationInfo.isFullfilled) {
+        //             log.test(tag,"is fullfilled!")
+        //             fullfillmentTxid = invocationInfo.fullfillmentTxid
+        //             isFullfilled = true
+        //             console.timeEnd('confirm2fullfillment')
+        //             //get tx gas price
+        //         } else {
+        //             log.test(tag,"unfullfilled!")
+        //         }
+        //     }
+        //     log.notice("****** TEST Report: "+fullfillmentTxid+" ******")
+        // }
+        // let result = await app.stopSocket()
+        // log.debug(tag,"result: ",result)
 
 
 
