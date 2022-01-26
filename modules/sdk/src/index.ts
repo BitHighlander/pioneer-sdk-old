@@ -777,10 +777,11 @@ export class SDK {
                 //send code to bridge
 
                 let respPair = await this.axios({method:'GET',url: this.bridge+'/pair/'+code.code})
-                log.debug(tag,"respPair: ",respPair.data)
+                log.info(tag,"respPair: ",respPair.data)
 
-                if(respPair.username){
-                    this.username = respPair.username
+                if(respPair.data.username){
+                    log.info("respPair username found! username: ",respPair.data.username)
+                    this.username = respPair.data.username
                     await this.getUserInfo()
                 }
 
@@ -1961,18 +1962,18 @@ export class SDK {
                 //get info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.debug(tag,"userInfo: ",userInfo)
+                log.info(tag,"userInfo: ",userInfo)
 
-                this.username = userInfo.username
-                this.context = userInfo.context
-                this.wallets = userInfo.wallets
+                if(userInfo.username)this.username = userInfo.username
+                if(userInfo.context)this.context = userInfo.context
+                if(userInfo.wallets)this.wallets = userInfo.wallets
                 if(userInfo.balances)this.balances = userInfo.balances
                 if(userInfo.pubkeys && this.pubkeys.length < userInfo.pubkeys.length)this.pubkeys = userInfo.pubkeys
-                this.totalValueUsd = parseFloat(userInfo.totalValueUsd)
-                this.invocationContext = userInfo.invocationContext
-                this.assetContext = userInfo.assetContext
-                this.assetBalanceNativeContext = userInfo.assetBalanceNativeContext
-                this.assetBalanceUsdValueContext = userInfo.assetBalanceUsdValueContext
+                if(userInfo.totalValueUsd)this.totalValueUsd = parseFloat(userInfo.totalValueUsd)
+                if(userInfo.invocationContext)this.invocationContext = userInfo.invocationContext
+                if(userInfo.assetContext)this.assetContext = userInfo.assetContext
+                if(userInfo.assetBalanceNativeContext)this.assetBalanceNativeContext = userInfo.assetBalanceNativeContext
+                if(userInfo.assetBalanceUsdValueContext)this.assetBalanceUsdValueContext = userInfo.assetBalanceUsdValueContext
 
                 return userInfo
             } catch (e) {

@@ -76,7 +76,7 @@ const test_service = async function () {
         let status = await app.checkBridge()
         assert(status)
         assert(status.username)
-        log.debug("status: ",status)
+        log.info("status: ",status)
         //use username from bridge
         // config.username = status.username
 
@@ -123,10 +123,11 @@ const test_service = async function () {
         await app.updateContext()
 
         //verify user
-        log.debug("app: ",app.username)
+        // log.info("app: ",app)
+        log.info("app: ",app.username)
         let username = app.username
         assert(username)
-        assert(app.context)
+        // assert(app.context)
         assert(app.pubkeys)
         assert(app.balances)
         assert(app.wallets)
