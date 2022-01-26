@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.16.3",
+    "@pioneer-platform/cosmos-tx-encoder": "0.0.3",
     "@pioneer-platform/pioneer-coins": "8.1.40",
     "@pioneer-platform/pioneer-events": "8.1.30",
     "@pioneer-platform/pioneer-invoke": "^8.1.35",

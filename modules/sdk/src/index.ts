@@ -39,15 +39,13 @@ let Invoke = require("@pioneer-platform/pioneer-invoke")
 
 const Axios = require('axios')
 const https = require('https')
-const axios = Axios.create({
-    httpsAgent: new https.Agent({
-        rejectUnauthorized: false
-    })
-});
+
 
 // import { ethers, BigNumberish } from 'ethers'
 // import BigNumber from 'bignumber.js'
 const TxBuilder = require("@pioneer-platform/pioneer-tx-builder");
+//encoder
+const txEncoder = require('@pioneer-platform/cosmos-tx-encoder')
 /*
     ShapeShiftOss
  */
@@ -101,6 +99,7 @@ import {
 // } from "@pioneer-platform/pioneer-types";
 
 export class SDK {
+    public axios: any
     public unchainedUrls: any;
     public spec: any;
     public pioneerApi: any;
@@ -195,16 +194,24 @@ export class SDK {
     public HDWallet: any;
     public buildTx: (tx: any) => Promise<any>;
     private getPubkeys: () => Promise<any>;
-    pairBridge: () => void;
+    private pairBridge: () => void;
     private checkBridge: () => void;
     private bridge: string;
     private pair: (code: string) => Promise<any>;
-    getCodeInfo: (code: string) => Promise<any>;
+    private getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
     private signTxBridge: (unsignedTx: any) => Promise<any>;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
+        this.axios = Axios.create({
+            httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+            }),
+            headers: {
+                origin: this.service
+            }
+        });
         this.url = config.url || 'unknown'
         this.dbPubkeys = Datastore.create('./path/to/dbPubkeys.db')
         this.dbBalances = Datastore.create('./path/to/dbBalances.db')
@@ -719,7 +726,7 @@ export class SDK {
             try {
                 //bridge status
                 log.debug(tag,"bridge: check")
-                let bridgeStatus = await axios.get(this.bridge+"/status")
+                let bridgeStatus = await this.axios.get(this.bridge+"/status")
                 return bridgeStatus.data
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -730,7 +737,7 @@ export class SDK {
             try {
                 //bridge status
                 log.debug(tag,"bridge: check")
-                let bridgeStatus = await axios.get(this.bridge+"/user")
+                let bridgeStatus = await this.axios.get(this.bridge+"/user")
                 return bridgeStatus.data
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -769,7 +776,7 @@ export class SDK {
                 log.debug(tag,"code: ",code)
                 //send code to bridge
 
-                let respPair = await axios({method:'GET',url: this.bridge+'/pair/'+code.code})
+                let respPair = await this.axios({method:'GET',url: this.bridge+'/pair/'+code.code})
                 log.debug(tag,"respPair: ",respPair.data)
 
                 if(respPair.username){
@@ -1039,6 +1046,7 @@ export class SDK {
                 return pubkey.address
             } catch (e) {
                 log.error(tag, "e: ", e)
+                // @ts-ignore
                 throw Error(e)
             }
         }
@@ -1265,7 +1273,7 @@ export class SDK {
             try {
 
                 //send to bridge
-                let respBridge = await axios.post(this.bridge+"/sign",{data:unsignedTx})
+                let respBridge = await this.axios.post(this.bridge+"/sign",{data:unsignedTx})
                 log.debug(tag,"respBridge: ",respBridge)
 
                 return respBridge.data
@@ -1324,16 +1332,12 @@ export class SDK {
                     case 'ATOM':
                         signedTx = await this.HDWallet.cosmosSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
-                        broadcastString = {
-                            tx:signedTx,
-                            type:"cosmos-sdk/StdTx",
-                            mode:"sync"
-                        }
+                        broadcastString = await txEncoder.encode(signedTx)
                         buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
                         //TODO FIXME
                         txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
 
-                        signedTx.serialized = JSON.stringify(broadcastString)
+                        signedTx.serialized = broadcastString
                         signedTx.txid = txid
                         break;
                     case 'OSMO':
@@ -1357,9 +1361,9 @@ export class SDK {
                         log.info(tag,"signedTx: ",signedTx)
 
                         //TODO do txid hashing in HDwallet
-                        txid = keccak256(signedTx.serialized).toString('hex')
-                        log.debug(tag,"txid: ",txid)
-                        signedTx.txid = txid
+                        // txid = keccak256(signedTx.serialized).toString('hex')
+                        // log.debug(tag,"txid: ",txid)
+                        signedTx.txid = "dis:broke:in:app"
 
                         break;
                     case 'BTC':
