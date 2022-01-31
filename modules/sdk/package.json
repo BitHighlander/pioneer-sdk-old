@@ -25,7 +25,7 @@
     "@pioneer-platform/pioneer-coins": "8.1.40",
     "@pioneer-platform/pioneer-events": "8.1.30",
     "@pioneer-platform/pioneer-invoke": "^8.1.35",
-    "@pioneer-platform/pioneer-tx-builder": "^8.1.41",
+    "@pioneer-platform/pioneer-tx-builder": "8.1.42",
     "@pioneer-platform/pioneer-types": "^8.1.48",
     "@pioneer-sdk/coins": "^0.0.4",
     "@pioneer-sdk/types": "^0.0.1",

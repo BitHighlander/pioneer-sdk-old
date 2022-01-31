@@ -1528,10 +1528,10 @@
     typescript "^3.9.7"
     when "^3.7.8"
 
-"@pioneer-platform/pioneer-tx-builder@^8.1.41":
-  version "8.1.41"
-  resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-tx-builder/-/pioneer-tx-builder-8.1.41.tgz#4dae086ba4bc20852878c3b87687b4de7d6a8800"
-  integrity sha512-llYiy/2oNbI3nq3NWppXPgk7cKFisnd6/ygyDYQvkczcMoS7K+YkbqDwLJPflZ3HHM1szj0HF6XzSamz0YOwNA==
+"@pioneer-platform/pioneer-tx-builder@8.1.42":
+  version "8.1.42"
+  resolved "https://registry.yarnpkg.com/@pioneer-platform/pioneer-tx-builder/-/pioneer-tx-builder-8.1.42.tgz#edb7c24b333aba17fb4a29510143b8e8a1119cd5"
+  integrity sha512-P5Ra7vtf4XprGpA1zKn7yeuyJG+ZBO0zT10uF87znY8FftR+yVgeYxnTnLc4CSnShDAVual3UoIibftHALdBtw==
   dependencies:
     "@bithighlander/hdwallet-core" latest
     "@bithighlander/hdwallet-native" latest

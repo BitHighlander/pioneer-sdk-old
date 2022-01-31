@@ -21,6 +21,12 @@ const KK = require('@shapeshiftoss/hdwallet-keepkey-nodewebusb')
 const adapter = KK.NodeWebUSBKeepKeyAdapter.useKeyring(new core.Keyring())
 let wait = require('wait-promise');
 import * as keepkeyTcp from '@shapeshiftoss/hdwallet-keepkey-tcp'
+import path from "path";
+
+const swaggerUi = require('swagger-ui-express');
+//path.join(__dirname, 'assets')
+const swaggerDocument = require(path.join(__dirname, '../api/dist/swagger.json'))
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -132,6 +138,13 @@ export class APP {
                     STATUS = 'keepkey connected'
 
                     let API_PORT = process.env['API_PORT_BRIDGE'] || '1646'
+
+                    //docs
+                    appExpress.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+                    //swagger.json
+                    appExpress.use('/spec', express.static('api/dist'));
+
                     //bridge
                     // @ts-ignore
                     appExpress.all('/exchange/device', async function (req, res, next) {

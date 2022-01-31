@@ -44,7 +44,7 @@ let FAUCET_ETH_ADDRESS = process.env['FAUCET_ETH_ADDRESS']
 let FAUCET_ADDRESS = FAUCET_ETH_ADDRESS
 if(!FAUCET_ADDRESS) throw Error("Need Faucet Address!")
 
-let noBroadcast = false
+let noBroadcast = true
 
 console.log("spec: ",spec)
 console.log("wss: ",wss)
@@ -231,8 +231,6 @@ const test_service = async function () {
 
         //get invocation
         log.debug(tag,"transaction: ",transaction)
-        log.test(tag,"invocationId: ",invocationId)
-
         let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
         assert(responseInvoke)
         if(!responseInvoke.success){
@@ -242,7 +240,9 @@ const test_service = async function () {
         log.debug(tag,"responseInvoke: ",responseInvoke)
 
         invocationId = responseInvoke.invocationId
+        assert(invocationId)
         transaction.invocationId = invocationId
+
 
         //get invocation
         let invocationView1 = await app.getInvocation(invocationId)
@@ -261,36 +261,36 @@ const test_service = async function () {
 
 
         //sign with bridge
-        // let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
-        // signedTx = signedTx.signedTx
-        // log.info(tag,"signedTx:  ",signedTx)
-        // signedTx.invocationId = invocationId
-        // signedTx.network = ASSET
-        //
-        // //update payload with signed
-        // let updateBody:any = {
-        //     network:invocationView1.network,
-        //     invocationId,
-        //     invocation:invocationView1.invocation,
-        //     unsignedTx:invocationView1.unsignedTx,
-        //     signedTx
-        // }
-        //
-        // //update invocation remote
-        // let resultUpdate = await app.updateInvocation(updateBody)
-        // log.info(tag,"resultUpdate:  ",resultUpdate)
-        //
-        // //broadcast
-        // let broadcastResp = await app.broadcastTransaction(signedTx)
-        // assert(broadcastResp)
-        // assert(broadcastResp.txid)
-        // log.info(tag,"broadcastResp:  ",broadcastResp)
-        //
-        // //update payload with signed
-        // updateBody.broadcastResp = broadcastResp
-        // //update invocation remote
-        // let resultUpdate2 = await app.updateInvocation(updateBody)
-        // log.info(tag,"resultUpdate2:  ",resultUpdate2)
+        let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
+        signedTx = signedTx.signedTx
+        log.info(tag,"signedTx:  ",signedTx)
+        signedTx.invocationId = invocationId
+        signedTx.network = ASSET
+
+        //update payload with signed
+        let updateBody:any = {
+            network:invocationView1.network,
+            invocationId,
+            invocation:invocationView1.invocation,
+            unsignedTx:invocationView1.unsignedTx,
+            signedTx
+        }
+
+        //update invocation remote
+        let resultUpdate = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate:  ",resultUpdate)
+
+        //broadcast
+        let broadcastResp = await app.broadcastTransaction(signedTx)
+        assert(broadcastResp)
+        assert(broadcastResp.txid)
+        log.info(tag,"broadcastResp:  ",broadcastResp)
+
+        //update payload with signed
+        updateBody.broadcastResp = broadcastResp
+        //update invocation remote
+        let resultUpdate2 = await app.updateInvocation(updateBody)
+        log.info(tag,"resultUpdate2:  ",resultUpdate2)
 
         //sign transaction
         log.notice("************* SIGN ON KEEPKEY! LOOK DOWN BRO ***************")
