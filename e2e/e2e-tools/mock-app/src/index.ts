@@ -274,7 +274,7 @@ export class APP {
                         let unsignedTx = invocationInfo.unsignedTx
                         log.info(tag,'unsignedTx: ',unsignedTx);
 
-                        //
+                        //ACCEPTED_INVOCATIONS
                         if(ACCEPTED_INVOCATIONS.indexOf(event.invocationId) === -1){
                             ACCEPTED_INVOCATIONS.push(event.invocationId)
                             let signedTx = await app.signTx(unsignedTx)
@@ -326,6 +326,10 @@ export class APP {
                 console.log('Checkpoint: pairWallet!')
                 let resultPair = await app.pairWallet('keepkey', HDWallet)
                 //console.log('resultPair: ', resultPair)
+
+                //init shapeshift
+                let resultInitShapeShift = await app.initShapeShift(HDWallet)
+                console.log('resultInitShapeShift: ', resultInitShapeShift)
 
                 log.debug("CHECKPOINT BRIDGE 4")
                 await wait.sleep(2000)

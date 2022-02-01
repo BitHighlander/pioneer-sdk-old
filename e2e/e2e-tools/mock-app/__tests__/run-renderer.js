@@ -33,6 +33,7 @@ let run_test = async function(){
             wss,
             blockchains
         }
+        //TODO software/hardware
         let app = new APP.APP(config.spec,config)
 
         await app.init(config.blockchains)

@@ -46,6 +46,9 @@ const https = require('https')
 const TxBuilder = require("@pioneer-platform/pioneer-tx-builder");
 //encoder
 const txEncoder = require('@pioneer-platform/cosmos-tx-encoder')
+let ShapeShiftClass = require('@pioneer-platform/shapeshift')
+
+
 /*
     ShapeShiftOss
  */
@@ -192,6 +195,7 @@ export class SDK {
     public pairWallet: (walletType:string, wallet: any, pubkeys: any) => Promise<any>;
     public chainAdapterManager: any;
     public HDWallet: any;
+    public ShapeShift: any;
     public buildTx: (tx: any) => Promise<any>;
     private getPubkeys: () => Promise<any>;
     private pairBridge: () => void;
@@ -201,6 +205,8 @@ export class SDK {
     private getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
     private signTxBridge: (unsignedTx: any) => Promise<any>;
+    private initShapeShift: (HDWallet:any) => Promise<void>;
+    private invocation: (tx: any) => Promise<any>;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
@@ -467,7 +473,7 @@ export class SDK {
 
                     pubkeys.push(normalized)
                 }
-                log.info(tag,"pubkeys:",pubkeys)
+                log.debug(tag,"pubkeys:",pubkeys)
                 output.pubkeys = pubkeys
                 this.pubkeys = pubkeys
                 if(pubkeys.length !== result.length) {
@@ -648,6 +654,19 @@ export class SDK {
                 throw e
             }
         }
+        this.initShapeShift = async function (HDWallet:any) {
+            let tag = TAG + " | initShapeShift | "
+            try {
+                //if !HDWallet throw
+                if(!this.HDWallet) throw Error("Can Not init ShapeShift Swapper")
+                //init
+                this.ShapeShift = new ShapeShiftClass(HDWallet)
+                let resultInit = await this.ShapeShift.init(this.HDWallet)
+                log.info(tag,"resultInit: ",resultInit)
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
         this.startSocket = function () {
             let tag = TAG + " | startSocket | "
             try {
@@ -810,11 +829,6 @@ export class SDK {
         }
         /*
               Supported wallets:
-
-                  Onboard.js
-
-              TODO kepler
-
          */
         this.pairWallet = async function (walletType:string, wallet:any, pubkeys:any) {
             let tag = TAG + " | pairWallet | "
@@ -1252,8 +1266,94 @@ export class SDK {
         //         log.error(tag, "e: ", e)
         //     }
         // }
+        //Inovaction API requires HDwallet
+        // @ts-ignore
+        this.invocation = async function (tx:any) {
+            let tag = TAG + " | invocation | "
+            try {
+                //build a tx
+                if(tx.type === 'swap'){
+                    //if need approve, build tx, add to invocation
 
-        //SDK buildTx
+                    //build quote tx
+
+                    //build
+                    let WETH = {
+                        caip19: 'eip155:1/erc20:0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+                        name: 'WETH',
+                        chain: 'ethereum',
+                        dataSource: 'coingecko',
+                        network: 'mainnet',
+                        precision: 18,
+                        tokenId: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2',
+                        contractType:'ERC20' ,
+                        color: '#FFFFFF',
+                        secondaryColor: '#FFFFFF',
+                        icon: 'https://assets.coingecko.com/coins/images/2518/thumb/weth.png?1628852295',
+                        slip44: 60,
+                        explorer: 'https://etherscan.io',
+                        explorerTxLink: 'https://etherscan.io/tx/',
+                        explorerAddressLink: 'https://etherscan.io/address/',
+                        sendSupport: true,
+                        receiveSupport: true,
+                        symbol: 'WETH'
+                    }
+
+                    let FOX = {
+                        caip19: 'eip155:1/erc20:0xc770eefad204b5180df6a14ee197d99d808ee52d',
+                        name: 'FOX',
+                        chain: 'ethereum',
+                        dataSource: 'coingecko',
+                        network: 'MAINNET',
+                        precision: 18,
+                        tokenId: '0xc770eefad204b5180df6a14ee197d99d808ee52d',
+                        contractType: 'ERC20',
+                        color: '#FFFFFF',
+                        secondaryColor: '#FFFFFF',
+                        icon: 'https://assets.coincap.io/assets/icons/fox@2x.png',
+                        sendSupport: true,
+                        slip44: 60,
+                        explorer: 'https://etherscan.io',
+                        explorerTxLink: 'https://etherscan.io/tx/',
+                        explorerAddressLink: 'https://etherscan.io/address/',
+                        receiveSupport: true,
+                        symbol: 'FOX'
+                    }
+
+
+                    // let minMax = await shapeshift.getMinMax(WETH, FOX)
+                    // console.log("minMax: ",minMax)
+
+                    //TODO broke
+                    // let canTradePair = await shapeshift.canTradePair(WETH, FOX)
+                    // console.log("canTradePair: ",canTradePair)
+
+                    //getQuote
+                    let input = {
+                        sellAsset:WETH,
+                        buyAsset:FOX,
+                        // sellAmount,
+                        buyAmount:10,
+                        // slippage,
+                        sellAssetAccountId:1,
+                        buyAssetAccountId:2,
+                        // priceImpact
+                    }
+                    let buildQuote = await this.ShapeShift.buildQuoteTx(input)
+                    console.log("buildQuote: ",buildQuote)
+
+
+                } else {
+                    throw Error("Unhandled Tx type! "+tx.type)
+                }
+                //swap
+
+
+                return {foo:"bar"}
+            } catch (e) {
+                log.error(tag, "e: ", e)
+            }
+        }
         this.buildTx = async function (tx:any) {
             let tag = TAG + " | buildTx | "
             try {
@@ -1268,7 +1368,6 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-
         this.signTxBridge = async function (unsignedTx:any) {
             let tag = TAG + " | signTxBridge | "
             try {
