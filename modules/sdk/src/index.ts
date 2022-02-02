@@ -1308,6 +1308,7 @@ export class SDK {
                 //TODO validate fee's
                 //TODO load EV data
                 //TODO validate recepiant from pioneer api
+                console.log("*** unsignedTx: ",JSON.stringify(unsignedTx))
 
                 let signedTx
                 let broadcastString
@@ -1362,9 +1363,9 @@ export class SDK {
                         log.info(tag,"signedTx: ",signedTx)
 
                         //TODO do txid hashing in HDwallet
-                        // txid = keccak256(signedTx.serialized).toString('hex')
-                        // log.debug(tag,"txid: ",txid)
-                        signedTx.txid = "dis:broke:in:app"
+                        txid = keccak256(signedTx.serialized).toString('hex')
+                        log.debug(tag,"txid: ",txid)
+                        signedTx.txid = txid
 
                         break;
                     case 'BTC':

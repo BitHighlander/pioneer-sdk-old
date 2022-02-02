@@ -186,6 +186,43 @@ const test_service = async function () {
             log.test(tag," Attempting e2e test "+ASSET+" balance: ",balanceContext.balance)
         }
 
+        //get swap params
+        //verify balances still exist
+
+        //max cost - balance
+
+        //you have x max amount spendable
+
+        //you are attempting to spend x
+
+        //this is x percent of total available
+
+        //get pool address
+        let poolInfo = await midgard.getPoolAddress()
+
+        //filter by chain
+        let ethVault = poolInfo.filter((e:any) => e.chain === 'ETH')
+        log.debug(tag,"ethVault: ",ethVault)
+
+        if(ethVault[0].halted) {
+            log.debug(tag,"ethVault: ",ethVault)
+            throw Error("Unable to swap! network halted!")
+        }
+
+        assert(ethVault[0])
+        ethVault = ethVault[0]
+        assert(ethVault.address)
+        assert(ethVault.router)
+        const vaultAddressEth = ethVault.address
+        const gasRate = ethVault.gas_rate
+        assert(vaultAddressEth)
+        assert(gasRate)
+
+
+
+
+
+
         //build tx
         let tx:any = {
             context:app.context,
@@ -218,6 +255,8 @@ const test_service = async function () {
         assert(responseSwap.HDwalletPayload)
         console.timeEnd('start2build');
 
+        console.log("STRING: rawTx: ",responseSwap)
+
         //invoke unsigned
         let transaction:any = {
             type:'keepkey-sdk',
@@ -229,68 +268,70 @@ const test_service = async function () {
             network:ASSET
         }
 
-        //get invocation
-        log.debug(tag,"transaction: ",transaction)
-        let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
-        assert(responseInvoke)
-        if(!responseInvoke.success){
-            assert(responseInvoke.invocationId)
-            log.error("failed to invoke!")
-        }
-        log.debug(tag,"responseInvoke: ",responseInvoke)
-
-        invocationId = responseInvoke.invocationId
-        assert(invocationId)
-        transaction.invocationId = invocationId
 
 
-        //get invocation
-        let invocationView1 = await app.getInvocation(invocationId)
-        log.debug(tag,"invocationView1: (VIEW) ",invocationView1)
-        assert(invocationView1)
-        assert(invocationView1.state)
-        assert(invocationView1.invocation)
-        assert(invocationView1.invocation.unsignedTx)
-        assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
-        //assert.equal(invocationView1.state,'builtTx')
-
-        //TODO validate payload
-
-        //sign with sdk
-
-
-
-        //sign with bridge
-        let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
-        signedTx = signedTx.signedTx
-        log.info(tag,"signedTx:  ",signedTx)
-        signedTx.invocationId = invocationId
-        signedTx.network = ASSET
-
-        //update payload with signed
-        let updateBody:any = {
-            network:invocationView1.network,
-            invocationId,
-            invocation:invocationView1.invocation,
-            unsignedTx:invocationView1.unsignedTx,
-            signedTx
-        }
-
-        //update invocation remote
-        let resultUpdate = await app.updateInvocation(updateBody)
-        log.info(tag,"resultUpdate:  ",resultUpdate)
-
-        //broadcast
-        let broadcastResp = await app.broadcastTransaction(signedTx)
-        assert(broadcastResp)
-        assert(broadcastResp.txid)
-        log.info(tag,"broadcastResp:  ",broadcastResp)
-
-        //update payload with signed
-        updateBody.broadcastResp = broadcastResp
-        //update invocation remote
-        let resultUpdate2 = await app.updateInvocation(updateBody)
-        log.info(tag,"resultUpdate2:  ",resultUpdate2)
+        // //get invocation
+        // log.debug(tag,"transaction: ",transaction)
+        // let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
+        // assert(responseInvoke)
+        // if(!responseInvoke.success){
+        //     assert(responseInvoke.invocationId)
+        //     log.error("failed to invoke!")
+        // }
+        // log.debug(tag,"responseInvoke: ",responseInvoke)
+        //
+        // invocationId = responseInvoke.invocationId
+        // assert(invocationId)
+        // transaction.invocationId = invocationId
+        //
+        //
+        // //get invocation
+        // let invocationView1 = await app.getInvocation(invocationId)
+        // log.debug(tag,"invocationView1: (VIEW) ",invocationView1)
+        // assert(invocationView1)
+        // assert(invocationView1.state)
+        // assert(invocationView1.invocation)
+        // assert(invocationView1.invocation.unsignedTx)
+        // assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
+        // //assert.equal(invocationView1.state,'builtTx')
+        //
+        // //TODO validate payload
+        //
+        // //sign with sdk
+        //
+        //
+        //
+        // //sign with bridge
+        // let signedTx = await app.signTxBridge(invocationView1.invocation.unsignedTx)
+        // signedTx = signedTx.signedTx
+        // log.info(tag,"signedTx:  ",signedTx)
+        // signedTx.invocationId = invocationId
+        // signedTx.network = ASSET
+        //
+        // //update payload with signed
+        // let updateBody:any = {
+        //     network:invocationView1.network,
+        //     invocationId,
+        //     invocation:invocationView1.invocation,
+        //     unsignedTx:invocationView1.unsignedTx,
+        //     signedTx
+        // }
+        //
+        // //update invocation remote
+        // let resultUpdate = await app.updateInvocation(updateBody)
+        // log.info(tag,"resultUpdate:  ",resultUpdate)
+        //
+        // //broadcast
+        // let broadcastResp = await app.broadcastTransaction(signedTx)
+        // assert(broadcastResp)
+        // assert(broadcastResp.txid)
+        // log.info(tag,"broadcastResp:  ",broadcastResp)
+        //
+        // //update payload with signed
+        // updateBody.broadcastResp = broadcastResp
+        // //update invocation remote
+        // let resultUpdate2 = await app.updateInvocation(updateBody)
+        // log.info(tag,"resultUpdate2:  ",resultUpdate2)
 
         //sign transaction
         log.notice("************* SIGN ON KEEPKEY! LOOK DOWN BRO ***************")

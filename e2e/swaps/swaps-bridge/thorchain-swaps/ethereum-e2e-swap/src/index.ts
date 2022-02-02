@@ -3,10 +3,7 @@
 
  */
 
-require("dotenv").config()
-require('dotenv').config({path:"../../.env"});
-require("dotenv").config({path:'../../../.env'})
-require("dotenv").config({path:'../../../../.env'})
+require("dotenv").config({path:'../../../../../.env'})
 
 const TAG  = " | e2e-test | "
 const log = require("@pioneer-platform/loggerdog")()
@@ -69,22 +66,10 @@ const test_service = async function () {
 
         const queryKey = "sdk:pair-keepkey:"+uuidv4();
         assert(queryKey)
-        const unchainedUrls = {
-            [ChainTypes.Bitcoin]: {
-                httpUrl: 'https://dev-api.bitcoin.shapeshift.com',
-                wsUrl: 'wss://dev-api.bitcoin.shapeshift.com'
-            },
-            [ChainTypes.Ethereum]: {
-                httpUrl: 'https://dev-api.ethereum.shapeshift.com',
-                wsUrl: 'wss://dev-api.ethereum.shapeshift.com'
-            }
-        }
-        assert(unchainedUrls)
         let config:any = {
             queryKey,
             spec,
-            wss,
-            unchainedUrls
+            wss
         }
         let app = new SDK.SDK(spec,config)
         let status = await app.checkBridge()
@@ -96,13 +81,16 @@ const test_service = async function () {
 
         //get bridge userInfo
         let userInfoBridge = await app.getBridgeUser()
-        log.info("userInfoBridge: ",userInfoBridge)
+        log.debug("userInfoBridge: ",userInfoBridge)
         //verify bridge userInfo has asset + balance
         assert(userInfoBridge)
         assert(userInfoBridge.pubkeys)
         assert(userInfoBridge.balances)
         let bridgeAssetBalance = userInfoBridge.balances.filter((e:any) => e.symbol === ASSET)[0]
         assert(bridgeAssetBalance)
+        if(!bridgeAssetBalance.balance){
+            log.error("Low on funds! empty: ",bridgeAssetBalance)
+        }
         assert(bridgeAssetBalance.balance)
 
         let API = await app.init(blockchains)
@@ -253,44 +241,51 @@ const test_service = async function () {
         let responseSwap = await app.buildTx(swap,options,ASSET)
         assert(responseSwap)
         log.debug(tag,"responseSwap: ",responseSwap)
+        log.debug(tag,"STRING responseSwap: ",JSON.stringify(responseSwap))
         assert(responseSwap.HDwalletPayload)
         console.timeEnd('start2build');
 
-        //invoke unsigned
-        let transaction:any = {
-            type:'keepkey-sdk',
-            fee:{
-                priority:3
-            },
-            unsignedTx:responseSwap,
-            context:app.context,
-            network:ASSET
-        }
+        let signedTx = await app.signTxBridge(responseSwap)
+        signedTx = signedTx.signedTx
+        log.info(tag,"signedTx:  ",signedTx)
+        signedTx.invocationId = invocationId
+        signedTx.network = ASSET
 
-        //get invocation
-        log.debug(tag,"transaction: ",transaction)
-        log.test(tag,"invocationId: ",invocationId)
-
-        let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
-        assert(responseInvoke)
-        if(!responseInvoke.success){
-            assert(responseInvoke.invocationId)
-            log.error()
-        }
-        log.debug(tag,"responseInvoke: ",responseInvoke)
-
-        invocationId = responseInvoke.invocationId
-        transaction.invocationId = invocationId
-
-        //get invocation
-        let invocationView1 = await app.getInvocation(invocationId)
-        log.debug(tag,"invocationView1: (VIEW) ",invocationView1)
-        assert(invocationView1)
-        assert(invocationView1.state)
-        assert(invocationView1.invocation)
-        assert(invocationView1.invocation.unsignedTx)
-        assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
-        //assert.equal(invocationView1.state,'builtTx')
+        // //invoke unsigned
+        // let transaction:any = {
+        //     type:'keepkey-sdk',
+        //     fee:{
+        //         priority:3
+        //     },
+        //     unsignedTx:responseSwap,
+        //     context:app.context,
+        //     network:ASSET
+        // }
+        //
+        // //get invocation
+        // log.debug(tag,"transaction: ",transaction)
+        // log.test(tag,"invocationId: ",invocationId)
+        //
+        // let responseInvoke = await app.invokeUnsigned(transaction,options,ASSET)
+        // assert(responseInvoke)
+        // if(!responseInvoke.success){
+        //     assert(responseInvoke.invocationId)
+        //     log.error()
+        // }
+        // log.debug(tag,"responseInvoke: ",responseInvoke)
+        //
+        // invocationId = responseInvoke.invocationId
+        // transaction.invocationId = invocationId
+        //
+        // //get invocation
+        // let invocationView1 = await app.getInvocation(invocationId)
+        // log.debug(tag,"invocationView1: (VIEW) ",invocationView1)
+        // assert(invocationView1)
+        // assert(invocationView1.state)
+        // assert(invocationView1.invocation)
+        // assert(invocationView1.invocation.unsignedTx)
+        // assert(invocationView1.invocation.unsignedTx.HDwalletPayload)
+        // //assert.equal(invocationView1.state,'builtTx')
 
         //TODO validate payload
 
