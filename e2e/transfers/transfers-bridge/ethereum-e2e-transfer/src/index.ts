@@ -197,32 +197,6 @@ const test_service = async function () {
 
         //this is x percent of total available
 
-        //get pool address
-        let poolInfo = await midgard.getPoolAddress()
-
-        //filter by chain
-        let ethVault = poolInfo.filter((e:any) => e.chain === 'ETH')
-        log.debug(tag,"ethVault: ",ethVault)
-
-        if(ethVault[0].halted) {
-            log.debug(tag,"ethVault: ",ethVault)
-            throw Error("Unable to swap! network halted!")
-        }
-
-        assert(ethVault[0])
-        ethVault = ethVault[0]
-        assert(ethVault.address)
-        assert(ethVault.router)
-        const vaultAddressEth = ethVault.address
-        const gasRate = ethVault.gas_rate
-        assert(vaultAddressEth)
-        assert(gasRate)
-
-
-
-
-
-
         //build tx
         let tx:any = {
             context:app.context,
@@ -249,26 +223,24 @@ const test_service = async function () {
         }
 
         //build swap
-        let responseSwap = await app.buildTx(tx,options,ASSET)
-        assert(responseSwap)
-        log.debug(tag,"responseSwap: ",responseSwap)
-        assert(responseSwap.HDwalletPayload)
+        let responseTransfer = await app.buildTx(tx,options,ASSET)
+        assert(responseTransfer)
+        log.debug(tag,"responseSwap: ",responseTransfer)
+        assert(responseTransfer.HDwalletPayload)
         console.timeEnd('start2build');
 
-        console.log("STRING: rawTx: ",responseSwap)
+        console.log("STRING: rawTx: ",responseTransfer)
 
         //invoke unsigned
         let transaction:any = {
-            type:'keepkey-sdk',
+            type:'trasnfer',
             fee:{
                 priority:3
             },
-            unsignedTx:responseSwap,
+            unsignedTx:responseTransfer,
             context:app.context,
             network:ASSET
         }
-
-
 
         // //get invocation
         // log.debug(tag,"transaction: ",transaction)

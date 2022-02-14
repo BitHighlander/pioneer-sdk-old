@@ -1,6 +1,6 @@
 {
   "name": "@pioneer-sdk/coins",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "./dist/index.js",
   "types": "./dist/main.d.ts",
   "_moduleAliases": {
@@ -15,10 +15,8 @@
   },
   "dependencies": {
     "@pioneer-platform/loggerdog": "latest",
-    "@types/tiny-secp256k1": "^2.0.1",
     "bech32": "^1.1.4",
     "bignumber.js": "^9.0.1",
-    "bip84": "0.2.7",
     "bitcoin-regex": "^2.0.0",
     "bitcoincash-regex": "^1.1.8",
     "crypto-js": "^4.0.0",

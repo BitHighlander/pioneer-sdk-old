@@ -1,19 +1,11 @@
 
 const TAG = " | coin tools | "
 const log = require("@pioneer-platform/loggerdog")()
-// const bitcoin = require("bitcoinjs-lib");
-const ethUtils = require('ethereumjs-util');
 const ripemd160 = require("crypto-js/ripemd160")
 const CryptoJS = require("crypto-js")
 const sha256 = require("crypto-js/sha256")
 const bech32 = require(`bech32`)
-//import BigNumber from 'bignumber.js'
 const b58 = require('bs58check');
-const BIP84 = require('bip84')
-import { getNetwork } from "./networks";
-let {
-    getPaths,
-} = require('./paths')
 
 /*
     Swap protocals
