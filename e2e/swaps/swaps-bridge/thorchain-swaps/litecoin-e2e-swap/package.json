@@ -1,6 +1,6 @@
 {
   "name": "@pioneer-platform/litecoin-e2e-thorchain-swap-keepkey",
-  "version": "8.1.42",
+  "version": "8.1.43",
   "scripts": {
     "yarn": "yarn",
     "start": "node dist/index.js",

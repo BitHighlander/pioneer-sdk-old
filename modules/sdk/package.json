@@ -1,6 +1,6 @@
 {
   "name": "@pioneer-sdk/sdk",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -27,8 +27,8 @@
     "@pioneer-platform/pioneer-invoke": "^8.1.35",
     "@pioneer-platform/pioneer-tx-builder": "8.1.42",
     "@pioneer-platform/pioneer-types": "^8.1.48",
-    "@pioneer-sdk/coins": "^0.0.5",
-    "@pioneer-sdk/types": "^0.0.1",
+    "@pioneer-sdk/coins": "^0.0.6",
+    "@pioneer-sdk/types": "^0.0.2",
     "@shapeshiftoss/asset-service": "^1.7.4",
     "@shapeshiftoss/caip": "^1.4.2",
     "@shapeshiftoss/chain-adapters": "^1.22.1",

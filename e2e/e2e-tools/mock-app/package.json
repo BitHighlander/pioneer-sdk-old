@@ -1,6 +1,6 @@
 {
   "name": "@pioneer-sdk/mock-app",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -27,7 +27,7 @@
     "@pioneer-platform/pioneer-invoke": "^8.1.35",
     "@pioneer-platform/pioneer-types": "^8.1.48",
     "@pioneer-sdk/coins": "^0.0.1",
-    "@pioneer-sdk/types": "^0.0.1",
+    "@pioneer-sdk/types": "^0.0.2",
     "@shapeshiftoss/asset-service": "^1.7.4",
     "@shapeshiftoss/caip": "^1.4.2",
     "@shapeshiftoss/chain-adapters": "^1.18.4",
