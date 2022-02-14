@@ -24,7 +24,7 @@
     "@types/node": "^13.13.51",
     "@types/source-map-support": "^0.5.3"
   },
-  "gitHead": "8f73c8e6833f870784aca4690d4b5f4ce9ed62d9",
+  "gitHead": "54da909f74f91cd10e6161a06aa75638c147ff96",
   "dependencies": {
     "typescript": "4.4"
   }
