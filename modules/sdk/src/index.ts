@@ -11,6 +11,9 @@
 const TAG = " | Pioneer-sdk | "
 const log = require("@pioneer-platform/loggerdog")()
 
+//keepkey sdk
+let kkApi = require("keepkey-sdk")
+
 //Pioneer follows OpenAPI spec
 const Pioneer = require('openapi-client-axios').default;
 const Events = require("@pioneer-platform/pioneer-events")
@@ -63,23 +66,23 @@ import { UtxoAccountType, BIP44Params } from '@shapeshiftoss/types'
 //end ssoss
 
 
-import {
-    Chart,
-    SendToAddress,
-    Config,
-    User,
-    Swap,
-    SDKConfig,
-    OnboardWallet,
-    IBCdeposit,
-    Invocation,
-    OsmosisSwap,
-    Delegate,
-    Redelegate,
-    JoinPool,
-    Transfer,
-    BroadcastBody
-} from "@pioneer-sdk/types";
+// import {
+//     Chart,
+//     SendToAddress,
+//     Config,
+//     User,
+//     Swap,
+//     SDKConfig,
+//     OnboardWallet,
+//     IBCdeposit,
+//     Invocation,
+//     OsmosisSwap,
+//     Delegate,
+//     Redelegate,
+//     JoinPool,
+//     Transfer,
+//     BroadcastBody
+// } from "@pioneer-sdk/types";
 
 // import {
 //     Chart,
@@ -201,6 +204,7 @@ export class SDK {
     private getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
     private signTxBridge: (unsignedTx: any) => Promise<any>;
+    private keepkey: any;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
@@ -550,6 +554,19 @@ export class SDK {
                         },
                     }
                 });
+
+                //
+                let keepkeySpec = this.bridge+'/spec/swagger.json'
+
+                //keepkey api
+                let configKeepKey = {
+                    queryKey:this.queryKey,
+                    spec:keepkeySpec
+                }
+
+                //get config
+                let kk = new kkApi(keepkeySpec,configKeepKey)
+                this.keepkey = await kk.init()
 
                 //TODO when to use cache?
                 // //read pubkeys from db
@@ -1273,9 +1290,12 @@ export class SDK {
             let tag = TAG + " | signTxBridge | "
             try {
 
-                //send to bridge
-                let respBridge = await this.axios.post(this.bridge+"/sign",{data:unsignedTx})
-                log.debug(tag,"respBridge: ",respBridge)
+                // //send to bridge
+                // let respBridge = await this.axios.post(this.bridge+"/sign",{data:unsignedTx})
+                // log.debug(tag,"respBridge: ",respBridge)
+
+                let respBridge = await this.keepkey.instance.SignTransaction(null,{data:{invocation:{unsignedTx}}})
+                console.log("respBridge: ",respBridge.data)
 
                 return respBridge.data
             } catch (e) {
