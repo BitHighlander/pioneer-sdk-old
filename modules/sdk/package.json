@@ -47,6 +47,7 @@
     "dotenv": "^8.2.0",
     "ethers": "^5.5.1",
     "keccak256": "^1.0.3",
+    "keepkey-sdk": "0.0.4",
     "nedb-promises": "^5.0.1",
     "openapi-client-axios": "^3.13.1",
     "prettyjson": "^1.2.1",

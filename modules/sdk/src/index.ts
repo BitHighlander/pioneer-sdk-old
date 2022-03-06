@@ -40,12 +40,16 @@ let Invoke = require("@pioneer-platform/pioneer-invoke")
 const Axios = require('axios')
 const https = require('https')
 
+//keepkey api
+
 
 // import { ethers, BigNumberish } from 'ethers'
 // import BigNumber from 'bignumber.js'
 const TxBuilder = require("@pioneer-platform/pioneer-tx-builder");
 //encoder
 const txEncoder = require('@pioneer-platform/cosmos-tx-encoder')
+
+const { KeepKeyClient } = require("keepkey-sdk")
 /*
     ShapeShiftOss
  */
@@ -109,6 +113,7 @@ export class SDK {
     public createPairingCode: () => Promise<any>;
     public queryKey: string;
     public service: string;
+    public serviceImageUrl: string;
     public isTestnet: boolean;
     // public sendToAddress: (blockchain: string, asset: string, amount: string, memo?: string) => Promise<any>;
     public url: string;
@@ -201,17 +206,11 @@ export class SDK {
     private getCodeInfo: (code: string) => Promise<any>;
     private getBridgeUser: () => Promise<any>;
     private signTxBridge: (unsignedTx: any) => Promise<any>;
+    private kkApi: any;
     constructor(spec:string,config:any) {
         this.unchainedUrls = config.unchainedUrls
         this.service = config.service || 'unknown'
-        this.axios = Axios.create({
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false,
-            }),
-            headers: {
-                origin: this.service
-            }
-        });
+        this.serviceImageUrl = config.serviceImageUrl
         this.url = config.url || 'unknown'
         this.dbPubkeys = Datastore.create('./path/to/dbPubkeys.db')
         this.dbBalances = Datastore.create('./path/to/dbBalances.db')
@@ -221,7 +220,7 @@ export class SDK {
         this.status = 'preInit'
         this.apiVersion = ""
         this.config = config
-        this.bridge = 'http://localhost:1646'
+        this.bridge = 'http://localhost:1646/spec/swagger.json'
         this.username = config.username
         this.spec = spec || config.spec
         this.wss = config.wss || 'wss://pioneers.dev'
@@ -338,10 +337,10 @@ export class SDK {
                 //NOTE: keepkey returns an ordered array.
                 //To build verbose pubkey info we must rebuild based on order
                 // console.log("pathsKeepkey: ",pathsKeepkey)
-                // log.debug(tag,"this.HDWallet: ",this.HDWallet)
-                // log.debug(tag,"this.HDWallet: ",this.HDWallet.wallet)
-                log.info(tag,"this.HDWallet: ",await this.HDWallet.isInitialized())
-                const result = await this.HDWallet.getPublicKeys(pathsKeepkey);
+                // log.debug(tag,"this.kkApi: ",this.kkApi)
+                // log.debug(tag,"this.kkApi: ",this.kkApi.wallet)
+                let result = await this.kkApi.GetPublicKeys(null,{paths:pathsKeepkey});
+                result = result.data
                 log.info("***** pubkeys OUT: ",result)
                 if(pathsKeepkey.length !== result.length) {
                     log.error(tag, {pathsKeepkey})
@@ -395,64 +394,78 @@ export class SDK {
 
                     //get master address
                     let address
+                    log.info(tag,"getAddress: ",pubkey.symbol)
                     switch(pubkey.symbol) {
                         case 'BTC':
                         case 'BCH':
                         case 'DOGE':
                         case 'DASH':
                         case 'LTC':
-                            address = await this.HDWallet.btcGetAddress({
+                            address = await this.kkApi.BtcGetAddress(null, {
                                 addressNList:paths[i].addressNListMaster,
                                 coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
                                 scriptType: paths[i].script_type,
                                 showDisplay: false
                             })
+                            address = address.data
+                            log.info(tag,"address: ",address)
                             break;
                         case 'ETH':
-                            address = await this.HDWallet.ethGetAddress({
+                            log.info(tag,"address: ",{
                                 addressNList:paths[i].addressNListMaster,
                                 coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
                                 scriptType: paths[i].script_type,
                                 showDisplay: false
                             })
+                            address = await this.kkApi.EthGetAddress(null, {
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            address = address.data
                             break;
                         case 'RUNE':
-                            address = await this.HDWallet.thorchainGetAddress({
+                            address = await this.kkApi.ThorchainGetAddress(null, {
                                 addressNList:paths[i].addressNListMaster,
                                 coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
                                 scriptType: paths[i].script_type,
                                 showDisplay: false
                             })
+                            address = address.data
                             break;
                         case 'ATOM':
-                            address = await this.HDWallet.cosmosGetAddress({
+                            address = await this.kkApi.CosmosGetAddress(null, {
                                 addressNList:paths[i].addressNListMaster,
                                 coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
                                 scriptType: paths[i].script_type,
                                 showDisplay: false
                             })
+                            address = address.data
                             break;
                         case 'OSMO':
-                            // address = await this.HDWallet.osmosisGetAddress({
-                            //     addressNList:paths[i].addressNListMaster,
-                            //     coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
-                            //     scriptType: paths[i].script_type,
-                            //     showDisplay: false
-                            // })
-                            address = 'osmo:TODO'
-                            break;
-                        case 'BNB':
-                            address = await this.HDWallet.binanceGetAddress({
+                            address = await this.kkApi.OsmosisGetAddress(null, {
                                 addressNList:paths[i].addressNListMaster,
                                 coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
                                 scriptType: paths[i].script_type,
                                 showDisplay: false
                             })
+                            address = address.data
+                            break;
+                        case 'BNB':
+                            address = await this.kkApi.BinanceGetAddress(null, {
+                                addressNList:paths[i].addressNListMaster,
+                                coin: COIN_MAP_KEEPKEY_LONG[pubkey.symbol],
+                                scriptType: paths[i].script_type,
+                                showDisplay: false
+                            })
+                            address = address.data
                             break;
                         default:
                             throw Error("coin not yet implemented ! coin: "+pubkey.symbol)
                         // code block
                     }
+                    log.info(tag,"address: ",address)
                     if(!address){
                         log.error("Failed to get address for pubkey: ",pubkey)
                         throw Error("address master required for valid pubkey")
@@ -506,7 +519,7 @@ export class SDK {
                     //verify master
                 }
 
-                // let features = this.HDWallet.features;
+                // let features = this.kkApi.features;
                 // log.debug(tag,"vender: ",features)
                 // log.debug(tag,"vender: ",features.deviceId)
 
@@ -551,16 +564,22 @@ export class SDK {
                     }
                 });
 
-                //TODO when to use cache?
-                // //read pubkeys from db
-                // let pubkeysDb = await this.dbPubkeys.find()
-                // log.debug(tag,"pubkeysDb: ",pubkeysDb)
-                // this.pubkeys = pubkeysDb
-                //
-                // //read balances from db
-                // let balancesDb = await this.dbBalances.find()
-                // log.debug(tag,"balancesDb: ",balancesDb)
-                // this.balances = balancesDb
+                let configKeepKey = {
+                    serviceKey: this.queryKey,
+                    serviceName: this.service,
+                    serviceImageUrl: this.serviceImageUrl,
+                    spec:this.bridge
+                }
+
+                //init
+                log.info(tag,"configKeepKey: ",configKeepKey)
+                this.kkApi = await new KeepKeyClient(configKeepKey).init()
+                let user = await this.kkApi.User()
+                log.info(tag,"user: ",user.data)
+
+                //format pubkeys
+
+                //register with pioneer
 
                 //init blockchains
                 for(let i = 0; i < blockchains.length; i++){
@@ -603,19 +622,17 @@ export class SDK {
                 //get global info
                 let userInfo = await this.pioneerApi.User()
                 userInfo = userInfo.data
-                log.debug(tag,"userInfo: ",userInfo)
+                log.info(tag,"userInfo: ",userInfo)
 
                 //if success false register username
                 if(!userInfo.success){
                     //no wallets paired
-                    // log.debug(tag,"user not registered!")
-                    //
-                    // let userInfo = {
-                    //     queryKey:this.queryKey,
-                    //     username:this.username
-                    // }
-                    // let registerUserResp = await this.pioneerApi.RegisterUser(null,userInfo)
-                    // log.debug(tag,"registerUserResp: ",registerUserResp)
+                    log.info(tag,"user not registered!")
+
+                    //if keepkey pubkeys
+                    let pairResult = await this.pairWallet('keepkey',{name:'keepkey'},user.accounts)
+                    log.info(tag,"pairResult:",pairResult)
+
                 } else if(userInfo.success) {
                     log.debug(tag,"userInfo: ",userInfo.success)
                     this.isPaired = true
@@ -726,7 +743,8 @@ export class SDK {
             try {
                 //bridge status
                 log.debug(tag,"bridge: check")
-                let bridgeStatus = await this.axios.get(this.bridge+"/status")
+                log.info(tag,"this.kkApi: ",this.kkApi)
+                let bridgeStatus = await this.kkApi.User()
                 return bridgeStatus.data
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -737,7 +755,7 @@ export class SDK {
             try {
                 //bridge status
                 log.debug(tag,"bridge: check")
-                let bridgeStatus = await this.axios.get(this.bridge+"/user")
+                let bridgeStatus = await this.kkApi.User()
                 return bridgeStatus.data
             } catch (e) {
                 log.error(tag, "e: ", e)
@@ -761,29 +779,6 @@ export class SDK {
                 //get code
                 let respPair = await this.pioneerApi.Pair({code})
                 log.debug(tag,"respPair: ",respPair.data)
-
-                return respPair.data
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
-        this.pairBridge = async function () {
-            let tag = TAG + " | pairBridge | "
-            try {
-                //bridge port
-                //get code
-                let code = await this.createPairingCode()
-                log.debug(tag,"code: ",code)
-                //send code to bridge
-
-                let respPair = await this.axios({method:'GET',url: this.bridge+'/pair/'+code.code})
-                log.info(tag,"respPair: ",respPair.data)
-
-                if(respPair.data.username){
-                    log.info("respPair username found! username: ",respPair.data.username)
-                    this.username = respPair.data.username
-                    await this.getUserInfo()
-                }
 
                 return respPair.data
             } catch (e) {
@@ -866,15 +861,6 @@ export class SDK {
                         provider:'lol'
                     }
                 } else if (walletType === 'keepkey'){
-                    let isInit = await wallet.isInitialized()
-                    if(!isInit) throw Error("Can not pair! not initialized!")
-                    //set SDK to HDwallet
-                    // console.log("keyring: ",wallet.transport.keyring)
-                    this.HDWallet = wallet
-
-                    // wallet.on('event', async function(event:any) {
-                    //     console.log("EVENT: ",event)
-                    // });
                     let pubkeys = await this.getPubkeys()
                     //register
                     register = {
@@ -903,10 +889,10 @@ export class SDK {
                     }
                     //
                     //set SDK to HDwallet
-                    this.HDWallet = new NativeHDWallet(nativeAdapterArgs)
-                    let resultInit = await this.HDWallet.initialize()
+                    this.kkApi = new NativeHDWallet(nativeAdapterArgs)
+                    let resultInit = await this.kkApi.initialize()
                     log.debug(tag,"resultInit: ",resultInit)
-                    let isInitialized = this.HDWallet.isInitialized()
+                    let isInitialized = this.kkApi.isInitialized()
                     log.debug(tag,"isInitialized: ",isInitialized)
                     if(!isInitialized) throw Error("failed to initialize")
 
@@ -1034,10 +1020,10 @@ export class SDK {
 
                 // if(showOnDevice){
                 //     //switch by asset
-                //     let accountInfo = this.HDWallet.hdwallet.osmosisGetAccountPaths({ accountIdx: 0 })
+                //     let accountInfo = this.kkApi.hdwallet.osmosisGetAccountPaths({ accountIdx: 0 })
                 //     log.debug(tag,"accountInfo: ",accountInfo)
                 //     let addressNList = accountInfo.addressNList
-                //     let result = await this.HDWallet.hdwallet.osmosisGetAddress({
+                //     let result = await this.kkApi.hdwallet.osmosisGetAddress({
                 //         addressNList,
                 //         showDisplay: true,
                 //     });
@@ -1269,24 +1255,10 @@ export class SDK {
             }
         }
 
-        this.signTxBridge = async function (unsignedTx:any) {
-            let tag = TAG + " | signTxBridge | "
-            try {
-
-                //send to bridge
-                let respBridge = await this.axios.post(this.bridge+"/sign",{data:unsignedTx})
-                log.debug(tag,"respBridge: ",respBridge)
-
-                return respBridge.data
-            } catch (e) {
-                log.error(tag, "e: ", e)
-            }
-        }
-
         this.signTx = async function (unsignedTx:any) {
             let tag = TAG + " | signTx | "
             try {
-                if(!this.HDWallet) throw Error('Can not not sign if a HDWwallet is not paired!')
+                if(!this.kkApi) throw Error('Can not not sign if a HDWwallet is not paired!')
                 log.info(tag,"unsignedTx: ",unsignedTx)
                 if(!unsignedTx) throw Error('Invalid payload! empty')
                 if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
@@ -1316,7 +1288,7 @@ export class SDK {
                 let txid
                 switch(unsignedTx.network) {
                     case 'RUNE':
-                        signedTx = await this.HDWallet.thorchainSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.kkApi.thorchainSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
 
                         broadcastString = {
@@ -1332,7 +1304,7 @@ export class SDK {
                         signedTx.txid = txid
                         break;
                     case 'ATOM':
-                        signedTx = await this.HDWallet.cosmosSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.kkApi.cosmosSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
                         broadcastString = await txEncoder.encode(signedTx)
                         buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
@@ -1344,7 +1316,7 @@ export class SDK {
                         break;
                     case 'OSMO':
                         log.debug(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
-                        signedTx = await this.HDWallet.osmosisSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.kkApi.osmosisSignTx(unsignedTx.HDwalletPayload)
                         log.debug(tag,"signedTx: ",signedTx)
 
                         broadcastString = {
@@ -1359,7 +1331,7 @@ export class SDK {
                         signedTx.serialized = JSON.stringify(broadcastString)
                         break;
                     case 'ETH':
-                        signedTx = await this.HDWallet.ethSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.kkApi.ethSignTx(unsignedTx.HDwalletPayload)
                         log.info(tag,"signedTx: ",signedTx)
 
                         //TODO do txid hashing in HDwallet
@@ -1376,7 +1348,7 @@ export class SDK {
                     case 'DGB':
                     case 'RDD':
                         log.info(tag,"payload: ",JSON.stringify(unsignedTx.HDwalletPayload))
-                        signedTx = await this.HDWallet.btcSignTx(unsignedTx.HDwalletPayload)
+                        signedTx = await this.kkApi.btcSignTx(unsignedTx.HDwalletPayload)
                         log.info(tag,"signedTx: ",signedTx)
 
                         break;
