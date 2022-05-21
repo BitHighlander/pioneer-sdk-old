@@ -156,7 +156,7 @@ export class SDK {
     public txBuilder: any;
     public buildSwapTx: (swap: any) => Promise<any>;
     public invoke: any;
-    public signTx: (unsignedTx: any) => Promise<{}>;
+    public signTx: (unsignedTx: any) => Promise<any>;
     // public ibcDeposit: (tx: IBCdeposit, nativeAsset: string) => Promise<any>;
     public getValidators: () => Promise<any>;
     public getDelegations: (validator: string, network: string, address: string) => Promise<any>;
@@ -1254,113 +1254,126 @@ export class SDK {
                 log.error(tag, "e: ", e)
             }
         }
-
         this.signTx = async function (unsignedTx:any) {
             let tag = TAG + " | signTx | "
             try {
-                if(!this.kkApi) throw Error('Can not not sign if a HDWwallet is not paired!')
-                log.info(tag,"unsignedTx: ",unsignedTx)
-                if(!unsignedTx) throw Error('Invalid payload! empty')
-                if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
 
-                let context
-                //TODO fix this crap, normalize unsginedTx object
-                if(!unsignedTx.context && unsignedTx?.swap?.context){
-                    context = unsignedTx.swap.context
-                } else if(!unsignedTx.context && unsignedTx?.transaction.context){
-                    context = unsignedTx.transaction.context
-                }else if(unsignedTx.context){
-                    context = unsignedTx.context
-                }
-                log.debug(tag,"context: ",context)
-                if(!context) throw Error('Invalid payload! missing: context')
-                log.debug(tag,"this.wallets: ",this.wallets)
+                let signedTx = await this.kkApi.SignTransaction(null, { data: { invocation: { unsignedTx } } })
+                log.info(tag,"responseSign: ", signedTx.data)
 
-                //TODO validate payload
-                //TODO validate fee's
-                //TODO load EV data
-                //TODO validate recepiant from pioneer api
-                console.log("*** unsignedTx: ",JSON.stringify(unsignedTx))
-
-                let signedTx
-                let broadcastString
-                let buffer
-                let txid
-                switch(unsignedTx.network) {
-                    case 'RUNE':
-                        signedTx = await this.kkApi.thorchainSignTx(unsignedTx.HDwalletPayload)
-                        log.debug(tag,"signedTx: ",signedTx)
-
-                        broadcastString = {
-                            tx:signedTx,
-                            type:"cosmos-sdk/StdTx",
-                            mode:"sync"
-                        }
-                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
-                        //TODO FIXME
-                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
-
-                        signedTx.serialized = JSON.stringify(broadcastString)
-                        signedTx.txid = txid
-                        break;
-                    case 'ATOM':
-                        signedTx = await this.kkApi.cosmosSignTx(unsignedTx.HDwalletPayload)
-                        log.debug(tag,"signedTx: ",signedTx)
-                        broadcastString = await txEncoder.encode(signedTx)
-                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
-                        //TODO FIXME
-                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
-
-                        signedTx.serialized = broadcastString
-                        signedTx.txid = txid
-                        break;
-                    case 'OSMO':
-                        log.debug(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
-                        signedTx = await this.kkApi.osmosisSignTx(unsignedTx.HDwalletPayload)
-                        log.debug(tag,"signedTx: ",signedTx)
-
-                        broadcastString = {
-                            tx:signedTx,
-                            type:"cosmos-sdk/StdTx",
-                            mode:"sync"
-                        }
-                        buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
-                        //TODO FIXME
-                        txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
-                        signedTx.txid = txid
-                        signedTx.serialized = JSON.stringify(broadcastString)
-                        break;
-                    case 'ETH':
-                        signedTx = await this.kkApi.ethSignTx(unsignedTx.HDwalletPayload)
-                        log.info(tag,"signedTx: ",signedTx)
-
-                        //TODO do txid hashing in HDwallet
-                        txid = keccak256(signedTx.serialized).toString('hex')
-                        log.debug(tag,"txid: ",txid)
-                        signedTx.txid = txid
-
-                        break;
-                    case 'BTC':
-                    case 'BCH':
-                    case 'LTC':
-                    case 'DOGE':
-                    case 'DASH':
-                    case 'DGB':
-                    case 'RDD':
-                        log.info(tag,"payload: ",JSON.stringify(unsignedTx.HDwalletPayload))
-                        signedTx = await this.kkApi.btcSignTx(unsignedTx.HDwalletPayload)
-                        log.info(tag,"signedTx: ",signedTx)
-
-                        break;
-                    default:
-                        throw Error("network not supported! "+unsignedTx.network)
-                }
-
-                return signedTx
+                return signedTx.data.signedTx
             } catch (e) {
                 log.error(tag, "e: ", e)
             }
         }
+        // this.signTx = async function (unsignedTx:any) {
+        //     let tag = TAG + " | signTx | "
+        //     try {
+        //         if(!this.kkApi) throw Error('Can not not sign if a HDWwallet is not paired!')
+        //         log.info(tag,"unsignedTx: ",unsignedTx)
+        //         if(!unsignedTx) throw Error('Invalid payload! empty')
+        //         if(!unsignedTx.HDwalletPayload) throw Error('Invalid payload! missing: HDwalletPayload')
+        //
+        //         let context
+        //         //TODO fix this crap, normalize unsginedTx object
+        //         if(!unsignedTx.context && unsignedTx?.swap?.context){
+        //             context = unsignedTx.swap.context
+        //         } else if(!unsignedTx.context && unsignedTx?.transaction.context){
+        //             context = unsignedTx.transaction.context
+        //         }else if(unsignedTx.context){
+        //             context = unsignedTx.context
+        //         }
+        //         log.debug(tag,"context: ",context)
+        //         if(!context) throw Error('Invalid payload! missing: context')
+        //         log.debug(tag,"this.wallets: ",this.wallets)
+        //
+        //         //TODO validate payload
+        //         //TODO validate fee's
+        //         //TODO load EV data
+        //         //TODO validate recepiant from pioneer api
+        //         console.log("*** unsignedTx: ",JSON.stringify(unsignedTx))
+        //
+        //         let signedTx
+        //         let broadcastString
+        //         let buffer
+        //         let txid
+        //         switch(unsignedTx.network) {
+        //             case 'RUNE':
+        //                 signedTx = await this.kkApi.ThorchainSignTx(null,unsignedTx.HDwalletPayload)
+        //                 signedTx = signedTx.data
+        //                 log.debug(tag,"signedTx: ",signedTx)
+        //
+        //                 broadcastString = {
+        //                     tx:signedTx,
+        //                     type:"cosmos-sdk/StdTx",
+        //                     mode:"sync"
+        //                 }
+        //                 buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+        //                 //TODO FIXME
+        //                 txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+        //
+        //                 signedTx.serialized = JSON.stringify(broadcastString)
+        //                 signedTx.txid = txid
+        //                 break;
+        //             case 'ATOM':
+        //                 signedTx = await this.kkApi.CosmosSignTx(null,unsignedTx.HDwalletPayload)
+        //                 signedTx = signedTx.data
+        //                 log.debug(tag,"signedTx: ",signedTx)
+        //                 broadcastString = await txEncoder.encode(signedTx)
+        //                 buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+        //                 //TODO FIXME
+        //                 txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+        //
+        //                 signedTx.serialized = broadcastString
+        //                 signedTx.txid = txid
+        //                 break;
+        //             case 'OSMO':
+        //                 log.debug(tag,"unsignedTx.HDwalletPayload: ",unsignedTx.HDwalletPayload)
+        //                 signedTx = await this.kkApi.OsmosisSignTx(null,unsignedTx.HDwalletPayload)
+        //                 signedTx = signedTx.data
+        //                 log.debug(tag,"signedTx: ",signedTx)
+        //
+        //                 broadcastString = signedTx.serialized
+        //                 broadcastString = broadcastString.replace('"',"")
+        //                 broadcastString = broadcastString.replace('"',"")
+        //                 buffer = Buffer.from(JSON.stringify(broadcastString), 'base64');
+        //                 //TODO FIXME
+        //                 txid = cryptoTools.createHash('sha256').update(buffer).digest('hex').toUpperCase()
+        //                 signedTx.txid = txid
+        //                 signedTx.serialized = broadcastString
+        //                 break;
+        //             case 'ETH':
+        //                 signedTx = await this.kkApi.EthSignTx(null,unsignedTx.HDwalletPayload)
+        //                 signedTx = signedTx.data
+        //                 log.info(tag,"signedTx: ",signedTx)
+        //
+        //                 //TODO do txid hashing in HDwallet
+        //                 txid = keccak256(signedTx.serialized).toString('hex')
+        //                 log.debug(tag,"txid: ",txid)
+        //                 signedTx.txid = txid
+        //
+        //                 break;
+        //             case 'BTC':
+        //             case 'BCH':
+        //             case 'LTC':
+        //             case 'DOGE':
+        //             case 'DASH':
+        //             case 'DGB':
+        //             case 'RDD':
+        //                 log.info(tag,"payload: ",JSON.stringify(unsignedTx.HDwalletPayload))
+        //                 signedTx = await this.kkApi.btcSignTx(null,unsignedTx.HDwalletPayload)
+        //                 signedTx = signedTx.data
+        //                 log.info(tag,"signedTx: ",signedTx)
+        //                 break;
+        //             default:
+        //                 throw Error("network not supported! "+unsignedTx.network)
+        //         }
+        //
+        //         return signedTx
+        //     } catch (e) {
+        //         log.error(tag, "e: ", e)
+        //     }
+        // }
         /*
             All IBC coins have IBC functions
             cosmos osmosis
@@ -1966,32 +1979,9 @@ export class SDK {
             let tag = TAG + " | broadcastTransaction | "
             try {
                 if(!signedTx.network) throw Error("103: invalid signed TX required network!")
-                // log.info(tag,"broadcastTransaction: ",signedTx)
-                // if(!signedTx.signedTx) throw Error("102: Unable to broadcast transaction! signedTx not found!")
-                //
-                // let invocation = await this.pioneerApi.Invocation(signedTx.invocationId)
-                // invocation = invocation.data
-                // log.info(tag,"invocation: ",invocation)
-                //
-                // //context
-                // let context = this.context
-                // if(!context) {
-                //     throw Error("103: could not find context "+context)
-                // }
-                //
-                // //TODO fix this tech debt
-                // //normalize
-                // if(!invocation.network) invocation.network = invocation.invocation.network
-                // if(!invocation.invocation.invocationId) invocation.invocation.invocationId = invocation.invocation.invocationId
-                // if(!invocation.signedTx.network) invocation.signedTx.network = invocation.network
-                // if(!invocation.signedTx.invocationId) invocation.signedTx.invocationId = invocation.invocationId
-                // if(invocation.signedTx && invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-                // if(invocation.signedTx && invocation.invocation.noBroadcast) invocation.signedTx.noBroadcast = true
-                //
-                //
-                // if(this.isTestnet && signedTx.network === 'BTC'){
-                //     signedTx.network = "TEST"
-                // }
+                if(!signedTx.invocationId) throw Error("103: invalid signed TX required invocationId!")
+                if(!signedTx.serialized) throw Error("103: invalid signed TX required serialized!")
+
                 log.info(tag,"signedTx: ",signedTx)
                 let resultBroadcast = await this.pioneerApi.Broadcast(null,signedTx)
                 log.info(tag,"resultBroadcast: ",resultBroadcast.data)

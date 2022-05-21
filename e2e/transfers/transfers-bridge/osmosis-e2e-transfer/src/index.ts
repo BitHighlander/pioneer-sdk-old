@@ -18,7 +18,7 @@ let sleep = wait.sleep;
 
 let BLOCKCHAIN = 'osmosis'
 let ASSET = 'OSMO'
-let MIN_BALANCE = process.env['MIN_BALANCE_ETH'] || "0.04"
+let MIN_BALANCE = process.env['MIN_BALANCE_OSMO'] || "0.00004"
 let TEST_AMOUNT = process.env['TEST_AMOUNT'] || "0.0001"
 let spec = process.env['URL_PIONEER_SPEC'] || 'https://pioneers.dev/spec/swagger.json'
 let wss = process.env['URL_PIONEER_SOCKET'] || 'wss://pioneers.dev'
@@ -39,6 +39,9 @@ let blockchains = [
 let txid:string
 let invocationId:string
 let IS_SIGNED: boolean
+
+let username = "test-e2e-osmosis-transfer"
+
 const test_service = async function () {
     let tag = TAG + " | test_service | "
     try {
@@ -47,67 +50,39 @@ const test_service = async function () {
         console.time('start2broadcast');
         console.time('start2end');
 
-        const queryKey = "sdk:pair-keepkey:"+uuidv4();
+        const queryKey = "sdk:pair-keepkey:blabla";
         assert(queryKey)
-
         let config:any = {
             queryKey,
+            username,
             spec,
+            service:"e2e-test-pioneer-sdk",
+            serviceImageUrl:"https://pioneers.dev/img/greenCompas.93ffdaf9.png",
             wss
         }
         let app = new SDK.SDK(spec,config)
-        let status = await app.checkBridge()
-        assert(status)
-        assert(status.username)
-        log.debug("status: ",status)
-        //use username from bridge
-        // config.username = status.username
-
-        //get bridge userInfo
-        let userInfoBridge = await app.getBridgeUser()
-        log.debug("userInfoBridge: ",userInfoBridge)
-        //verify bridge userInfo has asset + balance
-        assert(userInfoBridge)
-        assert(userInfoBridge.pubkeys)
-        assert(userInfoBridge.balances)
-        let bridgeAssetBalance = userInfoBridge.balances.filter((e:any) => e.symbol === ASSET)[0]
-        assert(bridgeAssetBalance)
-        if(!bridgeAssetBalance.balance){
-            log.error("Low on funds! empty: ",bridgeAssetBalance)
-        }
-        assert(bridgeAssetBalance.balance)
 
         let API = await app.init(blockchains)
         let events = await app.startSocket()
         assert(API)
         assert(events)
+        let status = await app.checkBridge()
+        log.info("status: (Bridge) ",status)
+        assert(status)
+        assert(status.online)
+        // assert(status.username)
 
-        events.on('invocations', function(event:any){
-            console.log('event: ',event)
-            if(event === 'update'){
-                log.info(tag,"update received!")
-                if(event.invocation.signedTx){
-                    IS_SIGNED = true
-                } else {
-                    log.info(tag,"not signed yet!")
-                }
-            }
-        })
+        let resultPair = await app.pairWallet('keepkey')
+        log.info("resultPair: ",resultPair)
 
-        //send pairing code to bridge
-        let pairResp = await app.pairBridge()
-        assert(pairResp)
-        assert(pairResp.success)
-        log.debug("pairResp: ",pairResp)
         let userInfo = await app.getUserInfo()
         log.debug("userInfo: ",userInfo)
-        assert(pairResp)
+        // assert(pairResp)
         //force update TODO removeme? @performance
         await app.updateContext()
 
         //verify user
         log.debug("app: ",app.username)
-        let username = app.username
         assert(username)
         assert(app.context)
         assert(app.pubkeys)
@@ -117,25 +92,7 @@ const test_service = async function () {
         log.debug("app pubkeys: ",app.pubkeys.length)
         log.debug("app balances: ",app.balances.length)
         log.debug("app context: ",app.context)
-        //TODO enfore sanity rules
-        //rules 1 pubkey per blockchain min
-        //rules 1 balance per pubkey min? I think we show 0 balance? right
-        //verify all balances are good
-        for(let i = 0; i < app.balances.length; i++){
-            let balance = app.balances[i]
-            log.debug("balance: ",balance)
-            if(balance.symbol === 'undefined') throw Error('invalid pubkey! undefined!')
-            //image
-            if(!balance.image){
-                log.error("Invalid image!: ",balance)
-            }
-            assert(balance.image)
-            assert(balance.pubkey)
-            assert(balance.path)
-            assert(balance.symbol)
-            //TODO rule, if asset, balance > 0
-        }
-        //pubkey of input
+
         let pubkeysIn = app.pubkeys.filter((e:any) => e.symbol === ASSET)
         assert(pubkeysIn.length > 0)
         //assert pubkey on context
@@ -146,18 +103,17 @@ const test_service = async function () {
         log.debug(tag,"pubkeysOut[0]: ",pubkeysIn[0].context)
         //note this assumes only 1 pubkey on 0
         //TODO if multi get @preferences
-        let pubkeyIn = pubkeysIn.filter((e:any) => e.context === app.context)[0]
+        let pubkeyIn = pubkeysIn.filter((e:any) => e.context === app.context)[1]
         log.debug(tag,"pubkeyIn: ",pubkeyIn)
         assert(pubkeyIn)
         assert(pubkeyIn.master)
         log.test("address from Swap: ",pubkeyIn.master)
-
         //balance of input
         log.debug(tag,"app.balances: ",app.balances)
         let balances = app.balances.filter((e:any) => e.symbol === ASSET)
         log.debug(tag,"balances: ",balances)
         assert(balances.length > 0)
-        let balanceContext = balances.filter((e:any) => e.context === app.context)[0]
+        let balanceContext = balances.filter((e:any) => e.context === app.context)[1]
         assert(balanceContext)
         assert(balanceContext.balance)
         assert(balanceContext.balance > 0)
@@ -238,7 +194,10 @@ const test_service = async function () {
         //assert.equal(invocationView1.state,'builtTx')
 
         //TODO validate payload
-
+        let signedTx = await app.signTx(invocationView1.invocation.unsignedTx)
+        log.info(tag,"signedTx: ",signedTx)
+        assert(signedTx.txid)
+        
         //sign transaction
         log.notice("************* SIGN ON KEEPKEY! LOOK DOWN BRO ***************")
         //wait for signedTx event
@@ -246,12 +205,16 @@ const test_service = async function () {
         //     log.info(tag,"waiting on user signing!! IS_SIGNED: ",IS_SIGNED)
         //     await sleep(1000)
         // }
+        signedTx.network = ASSET
+        signedTx.invocationId = invocationId
+        let broadcastResult = await app.broadcastTransaction(signedTx)
+        log.info(tag,"broadcastResult: ",broadcastResult)
 
         //verify broadcasted
-        // let invocationView3 = await app.getInvocation(invocationId)
-        // log.debug(tag,"invocationView3: (VIEW) ",invocationView3)
-        // assert(invocationView3.state)
-        // assert.equal(invocationView3.state,'broadcasted')
+        let invocationView3 = await app.getInvocation(invocationId)
+        log.debug(tag,"invocationView3: (VIEW) ",invocationView3)
+        assert(invocationView3.state)
+        assert.equal(invocationView3.state,'broadcasted')
 
         //get invocation info EToC
         console.timeEnd('start2broadcast');
